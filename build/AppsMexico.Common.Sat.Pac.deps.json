@@ -1368,6 +1368,8 @@
           "AppsMexico.Common.Resources": "2.0.3",
           "Microsoft.AspNetCore.Mvc.ViewFeatures": "2.2.0",
           "Microsoft.Extensions.Caching.Abstractions": "5.0.0",
+          "Microsoft.Extensions.Localization": "5.0.8",
+          "Microsoft.Extensions.Localization.Abstractions": "5.0.8",
           "Newtonsoft.Json": "13.0.1",
           "System.ComponentModel.Annotations": "5.0.0"
         },
@@ -1390,7 +1392,8 @@
       },
       "AppsMexico.Common.Resources\/2.0.3": {
         "dependencies": {
-          "Microsoft.Extensions.Localization": "5.0.8"
+          "Microsoft.Extensions.Localization": "5.0.8",
+          "Microsoft.Extensions.Localization.Abstractions": "5.0.8"
         },
         "runtime": {
           "AppsMexico.Common.Resources.dll": {}
