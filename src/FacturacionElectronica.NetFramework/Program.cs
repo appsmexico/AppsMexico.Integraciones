@@ -13,6 +13,7 @@
 //<package id="System.ServiceModel.Primitives" version="4.8.1" targetFramework="net462" />
 //<package id="System.ServiceModel.Http" version="4.8.1" targetFramework="net462" />
 //<package id="System.Text.Encoding.CodePages" version="6.0.0" targetFramework="net462" />
+//<package id="System.Text.Json" version="5.0.0" targetFramework="net462" />
 
 namespace FacturacionElectronica.NetFramework
 {
@@ -20,6 +21,7 @@ namespace FacturacionElectronica.NetFramework
     using AppsMexico.Common.Classes.Account;
     using AppsMexico.Common.Classes.Enums;
     using AppsMexico.Common.Classes.Enums.Sat.Cfdi;
+    using AppsMexico.Common.Classes.Dbo;
     using AppsMexico.Common.Classes.Sat;
     using AppsMexico.Common.Functions;
     using AppsMexico.Common.Sat.Pac;
@@ -31,7 +33,7 @@ namespace FacturacionElectronica.NetFramework
 
     internal class Program
     {
-        private static bool ApiUrl { get => Convert.ToBoolean(ConfigurationManager.AppSettings["ApiUrl"]); }
+        private static string ApiUrl { get => ConfigurationManager.AppSettings["ApiUrl"]; }
         private static bool ModoDebug { get => Convert.ToBoolean(ConfigurationManager.AppSettings["ModoDebug"]); }
         private static bool ModoPrueba { get => Convert.ToBoolean(ConfigurationManager.AppSettings["ModoPrueba"]); }
 
@@ -39,22 +41,27 @@ namespace FacturacionElectronica.NetFramework
         {
             try
             {
-                Console.WriteLine("Ingrese el proceso que desea realizar. Timbrado XML = T, Cancelacion XML = C, Timbrado JSON = J");
+                Console.WriteLine("Ingrese el proceso que desea realizar. Timbrado XML = 1, Cancelacion XML = 2, Timbrado Ingreso JSON = 3, Timbrado Ingreso Carta Porte JSON = 4");
                 string vRespuesta = Console.ReadLine();
-                if (string.Compare(vRespuesta, "T", true) == 0)
+                if (string.Compare(vRespuesta, "1", true) == 0)
                 {
-                    Console.WriteLine("TimbrarCfdi");
+                    Console.WriteLine($"{nameof(TimbrarCfdi)}");
                     Task.Run(async () => await TimbrarCfdi());
                 }
-                else if (string.Compare(vRespuesta, "C", true) == 0)
+                else if (string.Compare(vRespuesta, "2", true) == 0)
                 {
-                    Console.WriteLine("CancelarCfdi");
+                    Console.WriteLine($"{nameof(CancelarCfdi)}");
                     Task.Run(async () => await CancelarCfdi());
                 }
-                else if (string.Compare(vRespuesta, "J", true) == 0)
+                else if (string.Compare(vRespuesta, "3", true) == 0)
                 {
-                    Console.WriteLine("TimbrarCfdiJson");
-                    Task.Run(async () => await TimbrarCfdiJson());
+                    Console.WriteLine($"{nameof(TimbrarCfdiIngresoJson)}");
+                    Task.Run(async () => await TimbrarCfdiIngresoJson());
+                }
+                else if (string.Compare(vRespuesta, "4", true) == 0)
+                {
+                    Console.WriteLine($"{nameof(TimbrarCfdiIngresoCartaPorteJson)}");
+                    Task.Run(async () => await TimbrarCfdiIngresoCartaPorteJson());
                 }
             }
             catch (Exception ex)
@@ -230,8 +237,8 @@ namespace FacturacionElectronica.NetFramework
         }
         #endregion
 
-        #region Timbrar CFDI JSON
-        private static async Task TimbrarCfdiJson()
+        #region Timbrar CFDI INGRESO JSON
+        private static async Task TimbrarCfdiIngresoJson()
         {
             try
             {
@@ -286,7 +293,7 @@ namespace FacturacionElectronica.NetFramework
                     EmisorRfc = "",
                     ErpTipoDocumento = "IN",
                     Exportacion = "",
-                    Fecha = new DateTime(2022, 4, 12, 18, 52, 05),
+                    Fecha = DateTime.Now,
                     Folio = "",
                     FormaDePago = "99",
                     InformacionGlobalAnio = null,
@@ -373,6 +380,316 @@ namespace FacturacionElectronica.NetFramework
 
                 vComprobanteDTO.Conceptos.Add(vComprobanteConceptoDTO);
 
+                ApiResponse vApiResponse = new ApiResponse(false);
+                try
+                {
+                    vData = WebFunctions.JsonConvert_SerializeObject(vComprobanteDTO);
+                    vWebRequest = await WebFunctions.PostRequestBearerTokenAsync($"{ApiUrl}/ComprobantesErp/Comprobante", vData, vTokenLogin.Token);
+                    try
+                    {
+                        vApiResponse = WebFunctions.JsonConvert_DeserializeObject<ApiResponse>(vWebRequest);
+                    }
+                    catch (Exception)
+                    {
+                        throw new ApplicationException(WebFunctions.ConvertHtmlToString(vWebRequest));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    vApiResponse.Descripcion = ExceptionFunctions.GetExceptionMessage(ex, ModoDebug);
+                }
+                Console.WriteLine($"{vApiResponse.ToJson()}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ExceptionFunctions.GetExceptionMessage(ex, ModoDebug)}");
+            }
+        }
+        #endregion
+
+        #region Timbrar CFDI INGRESO CARTA PORTE JSON
+        private static async Task TimbrarCfdiIngresoCartaPorteJson()
+        {
+            try
+            {
+                TokenLogin vTokenLogin = null;
+
+                Login vLogin = new Login()
+                {
+                    UserId = "democfdi@appsmexico.mx",
+                    Password = "Pa$$w0rd",
+                    RememberMe = true,
+                    EmpresaId = "NARJ",
+                    AplicacionId = "FacturacionElectronica.NetFramework",
+                    BrowserSOVersion = "",
+                    DispositivoId = "AMTestPC",
+                    ClientIPAddress = "0.0.0.0"
+                };
+
+                string vData = WebFunctions.JsonConvert_SerializeObject(vLogin);
+                string vWebRequest = await WebFunctions.PostRequestAsync($"{ApiUrl}/Account/Login", vData);
+                try
+                {
+                    vTokenLogin = WebFunctions.JsonConvert_DeserializeObject<TokenLogin>(vWebRequest);
+                }
+                catch (Exception)
+                {
+                    throw new ApplicationException(WebFunctions.ConvertHtmlToString(vWebRequest));
+                }
+
+                if (vTokenLogin == null)
+                {
+                    throw new ApplicationException("No se obtuvo informacion del token para iniciar sersion.");
+                }
+                else if (vTokenLogin.OperacionExitosa == false)
+                {
+                    throw new ApplicationException(vTokenLogin.Mensaje);
+                }
+
+                ComprobanteDTO vComprobanteDTO = new ComprobanteDTO
+                {
+                    EmpresaId = "NARJ",
+                    ErpId = "002354",
+                    ReferenciaErp = "TMPIN16213",
+                    ClienteId = "0000000118",
+                    Comentarios = "",
+                    Complemento = "",
+                    CondicionesDePago = "CONTADO",
+                    Descuento = 1.0,
+                    DireccionEnvioId = "DEFAULT",
+                    EmisorFacAtrAdquiriente = "",
+                    EmisorRazonSocial = "",
+                    EmisorRegimenFiscalId = "",
+                    EmisorRfc = "",
+                    ErpTipoDocumento = "IN",
+                    Exportacion = "",
+                    Fecha = DateTime.Now,
+                    Folio = "",
+                    FormaDePago = "99",
+                    InformacionGlobalAnio = null,
+                    InformacionGlobalMeses = null,
+                    InformacionGlobalPeriodicidad = null,
+                    LugarExpedicion = "62070",
+                    MetodoDePago = "PPD",
+                    ModuloErp = "AR",
+                    MonedaId = "MXN",
+                    MotivoDescuento = "",
+                    NombreReporte = "",
+                    OrdenCompra = "",
+                    PacRfc = "",
+                    PedidoId = "",
+                    ReceptorEmail = "",
+                    ReceptorRazonSocial = "VENTA AL PUBLICO EN GENERAL",
+                    ReceptorRegimenFiscalId = "616",
+                    ReceptorRfc = "XAXX010101000",
+                    ReceptorCalle = "AV. DE LOS MAESTROS ",
+                    ReceptorCiudadId = "",
+                    ReceptorCodigoPostalId = "62070",
+                    ReceptorColonia = "ALCALDE BARRANQUITAS",
+                    ReceptorCurp = "",
+                    ReceptorEnviarEmailAutomaticamente = true,
+                    ReceptorEstadoId = "MOR",
+                    ReceptorMostrarDomicilioFiscal = true,
+                    ReceptorMunicipioId = "CUERNAVACA",
+                    ReceptorNombreComercial = "",
+                    ReceptorNumeroExterior = "284",
+                    ReceptorNumeroInterior = "2",
+                    ReceptorPaisId = "MX",
+                    ReceptorRegistroIdentificacionFiscal = "",
+                    ReceptorUsoCfdi = "",
+                    Saldo = 199.16,
+                    Serie = "",
+                    SerieAtributo = "ARIN",
+                    SubTotal = 200.0,
+                    SucursalAtributo = "ARIN",
+                    SucursalId = "",
+                    TimbrarComprobanteAutomaticamente = true,
+                    TipoCambio = 1.0,
+                    TipoDocumentoId = "IN",
+                    TipoRelacionComprobantes = "",
+                    Total = 199.16,
+                    TotalImpuestosLocalesRetenidos = 0.0,
+                    TotalImpuestosLocalesTrasladados = 0.0,
+                    TotalImpuestosRetenidos = 0.0,
+                    TotalImpuestosTrasladados = 0.16,
+                    ValidarInformacionWebApp = false,
+                    Conceptos = new List<ComprobanteConceptoDTO>(),
+                };
+
+                ComprobanteConceptoDTO vComprobanteConceptoDTO = new ComprobanteConceptoDTO
+                {
+                    ConceptoId = "1",
+                    Cantidad = 1.0,
+                    ComentariosConcepto = "",
+                    Complemento = "",
+                    Descripcion = "Cigarros",
+                    DescuentoConcepto = 1.0,
+                    ErpIdConcepto = "1",
+                    GrupoImpuestos = "",
+                    Importe = 200.0,
+                    NoIdentificacion = "",
+                    ObjetoDeImpuestos = "02",
+                    PrecioBase = 100.0,
+                    ProductoServicioId = "78101500",
+                    UnidadMedida = "Pieza",
+                    UnidadMedidaClave = "H87",
+                    ValorUnitario = 200.0,
+                    Impuestos = new List<ComprobanteImpuestoDTO> {
+                        new ComprobanteImpuestoDTO
+                        {
+                            LineaImpuesto = 1,
+                            CodigoImpuesto = "IVA16",
+                            ImporteBase = 1.0,
+                            ImporteImpuesto = 0.16,
+                            TasaOCuota = 0.16,
+                            TipoFactor = c_TipoFactor.Tasa,
+                            TipoImpuesto = EnumTipoImpuesto.T
+                        },
+                        new ComprobanteImpuestoDTO
+                        {
+                            LineaImpuesto = 2,
+                            CodigoImpuesto = "RETISR",
+                            ImporteBase = 1.0,
+                            ImporteImpuesto = 0.0,
+                            TasaOCuota = 0.10,
+                            TipoFactor = c_TipoFactor.Tasa,
+                            TipoImpuesto = EnumTipoImpuesto.R
+                        },
+                        new ComprobanteImpuestoDTO
+                        {
+                            LineaImpuesto = 3,
+                            CodigoImpuesto = "RETIVA",
+                            ImporteBase = 1.0,
+                            ImporteImpuesto = 0.0,
+                            TasaOCuota = 0.106666,
+                            TipoFactor = c_TipoFactor.Tasa,
+                            TipoImpuesto = EnumTipoImpuesto.R
+                        },
+                    },
+                    ComplementoCartaPorteMercancia = new ComprobanteConceptoComplementoCartaPorteMercanciaDTO
+                    {
+                        ConceptoId = "1",
+                        PesoEnKg = 1.0,
+                        MaterialPeligroso = true,
+                        ClaveMaterialPeligroso = "1266",
+                        ClaveEmbalaje = "4H2",
+                        CantidadesTransporta = new List<ComprobanteConceptoComplementoCartaPorteMercanciaCantidadTransportaDTO>
+                        {
+                            new ComprobanteConceptoComplementoCartaPorteMercanciaCantidadTransportaDTO
+                            {
+                                IDOrigen = "OR101010",
+                                IDDestino = "DE202020",
+                                Cantidad = 1,
+                            },
+                            new ComprobanteConceptoComplementoCartaPorteMercanciaCantidadTransportaDTO
+                            {
+                                IDOrigen = "OR101010",
+                                IDDestino = "DE202021",
+                                Cantidad = 1,
+                            },
+                        },
+                    }
+                };
+
+                vComprobanteDTO.Conceptos.Add(vComprobanteConceptoDTO);
+
+                vComprobanteDTO.ComplementoCartaPorte = new ComprobanteComplementoCartaPorteDTO
+                {
+                    TransporteInternacional = "No",
+                    TotalDistanciaRecorrida = 2,
+                    MercanciasPesoBrutoTotal = 2.0,
+                    MercanciasUnidadPeso = "XBX",
+                    MercanciasNumeroTotalMercancias = 2,                    
+                    NumeroPermisoSCT = "NumPermisoSCT",
+                    TipoPermisoSCT = "TPAF01",
+                    AutoTransporte = new ComprobanteComplementoCartaPorteAutoTransporteDTO
+                    {
+                        ConfiguracionVehicular = "VL",
+                        PlacaVM = "plac892",
+                        AnioModeloVM = 2020,
+                        SeguroAseguraResponsabilidadCivil = "SW Seguros",
+                        SeguroPolizaResponsabilidadCivil = "123456789",
+                        SeguroAseguraCarga = "SW Seguros",
+                        SeguroAseguraMedioAmbiente = "SW Seguros Ambientales",
+                        SeguroPolizaMedioAmbiente = "123456789",
+                        Remolque1Placa = "ABC123",
+                        Remolque1SubTipoRemolque = "CTR021",
+                    },
+                    FigurasTransporte = new List<ComprobanteComplementoCartaPorteFiguraTransporteDTO>
+                    {
+                        new ComprobanteComplementoCartaPorteFiguraTransporteDTO
+                        {
+                            TipoFiguraTransporte = EnumTipoFiguraTransporte.Operador,
+                            Rfc = "VAAM130719H60",
+                            NumeroLicencia = "a234567890",
+                        }
+                    },
+                    Ubicaciones = new List<ComprobanteComplementoCartaPorteUbicacionDTO>
+                    {
+                        new ComprobanteComplementoCartaPorteUbicacionDTO
+                        {
+                            IDUbicacion = "OR101010",
+                            TipoUbicacion = EnumTipoUbicacionTransporte.Origen,
+                            RfcRemitenteDestinatario = "EKU9003173C9",
+                            FechaHoraSalidaLlegada = new DateTime(2022,04,14),
+                            Domicilio = new DomicilioDTO
+                            {
+                                CodigoDomicilio = "101010",
+                                Calle = "calle",
+                                NumeroExterior = "211",
+                                Colonia = "0347",
+                                Ciudad = "23",
+                                Referencia = "casa blanca 1",
+                                Municipio = "004",
+                                Estado = "COA",
+                                Pais = "MEX",
+                                CodigoPostal = "25350"
+                            },
+                        },
+                        new ComprobanteComplementoCartaPorteUbicacionDTO
+                        {
+                            IDUbicacion = "DE202020",
+                            TipoUbicacion = EnumTipoUbicacionTransporte.Destino,
+                            RfcRemitenteDestinatario = "AAA010101AAA",
+                            FechaHoraSalidaLlegada = new DateTime(2022,04,14,1,0,0),
+                            DistanciaRecorrida = 1,
+                            Domicilio = new DomicilioDTO
+                            {
+                                CodigoDomicilio = "202020",
+                                Calle = "calle",
+                                NumeroExterior = "214",
+                                Colonia = "0347",
+                                Ciudad = "23",
+                                Referencia = "casa blanca 2",
+                                Municipio = "004",
+                                Estado = "COA",
+                                Pais = "MEX",
+                                CodigoPostal = "25350"
+                            },
+                        },
+                        new ComprobanteComplementoCartaPorteUbicacionDTO
+                        {
+                            IDUbicacion = "DE202021",
+                            TipoUbicacion = EnumTipoUbicacionTransporte.Destino,
+                            RfcRemitenteDestinatario = "AAA010101AAA",
+                            FechaHoraSalidaLlegada = new DateTime(2022,04,14,2,0,0),
+                            DistanciaRecorrida = 1,
+                            Domicilio = new DomicilioDTO
+                            {
+                                CodigoDomicilio = "202021",
+                                Calle = "calle",
+                                NumeroExterior = "220",
+                                Colonia = "0347",
+                                Ciudad = "23",
+                                Referencia = "casa blanca 3",
+                                Municipio = "004",
+                                Estado = "COA",
+                                Pais = "MEX",
+                                CodigoPostal = "25350"
+                            },
+                        },
+                    }
+                };
                 ApiResponse vApiResponse = new ApiResponse(false);
                 try
                 {
