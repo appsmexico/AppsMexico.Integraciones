@@ -41,7 +41,7 @@ namespace FacturacionElectronica.NetFramework
         {
             try
             {
-                Console.WriteLine("Ingrese el proceso que desea realizar. Timbrado XML = 1, Cancelacion XML = 2, Timbrado Ingreso JSON = 3, Timbrado Ingreso Carta Porte JSON = 4");
+                Console.WriteLine("Ingrese el proceso que desea realizar. Timbrado XML = 1, Cancelacion XML = 2, Timbrado Ingreso JSON = 3, Timbrado Ingreso Carta Porte JSON = 4, Cancelacion CFDI JSON = 5");
                 string vRespuesta = Console.ReadLine();
                 if (string.Compare(vRespuesta, "1", true) == 0)
                 {
@@ -62,6 +62,11 @@ namespace FacturacionElectronica.NetFramework
                 {
                     Console.WriteLine($"{nameof(TimbrarCfdiIngresoCartaPorteJson)}");
                     Task.Run(async () => await TimbrarCfdiIngresoCartaPorteJson());
+                }
+                else if (string.Compare(vRespuesta, "5", true) == 0)
+                {
+                    Console.WriteLine($"{nameof(CancelarCfdiJson)}");
+                    Task.Run(async () => await CancelarCfdiJson());
                 }
             }
             catch (Exception ex)
@@ -237,8 +242,8 @@ namespace FacturacionElectronica.NetFramework
         }
         #endregion
 
-        #region Timbrar CFDI INGRESO JSON
-        private static async Task TimbrarCfdiIngresoJson()
+        #region Genera Token
+        private static async Task<TokenLogin> Login()
         {
             try
             {
@@ -249,11 +254,11 @@ namespace FacturacionElectronica.NetFramework
                     UserId = "democfdi@appsmexico.mx",
                     Password = "Pa$$w0rd",
                     RememberMe = true,
-                    EmpresaId = "NARJ",
-                    AplicacionId = "FacturacionElectronica.NetFramework",
+                    EmpresaId = "DEMO",
+                    AplicacionId = AssemblyInfo.Title,
                     BrowserSOVersion = "",
-                    DispositivoId = "AMTestPC",
-                    ClientIPAddress = "0.0.0.0"
+                    DispositivoId = Environment.MachineName,
+                    ClientIPAddress = System.Net.Dns.GetHostEntry(System.Net.Dns.GetHostName()).AddressList.First(x => x.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork).ToString()
                 };
 
                 string vData = WebFunctions.JsonConvert_SerializeObject(vLogin);
@@ -276,11 +281,80 @@ namespace FacturacionElectronica.NetFramework
                     throw new ApplicationException(vTokenLogin.Mensaje);
                 }
 
+                return vTokenLogin;
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+        #endregion
+
+        #region Timbrar CFDI INGRESO JSON
+        private static async Task CancelarCfdiJson()
+        {
+            try
+            {
+                TokenLogin vTokenLogin = await Login();
+
+                ComprobanteCancelacionDTO vComprobanteCancelacionDTO = new ComprobanteCancelacionDTO()
+                {
+                    EmpresaId = "DEMO",
+                    FechaCancelado = DateTime.Now,
+                    MotivoCancelacion = "Se cancela por ser un documento de prueba",
+                    MotivoCancelacionCodigo = "02",
+                    UUID = new Guid("3B5DE2A3-5C90-5F17-AC16-F675FE74AEBE")
+                };
+
+                CancelarCfdiResponse vCancelarCfdiResponse = new CancelarCfdiResponse(false);
+                try
+                {
+                    string vData = WebFunctions.JsonConvert_SerializeObject(vComprobanteCancelacionDTO);
+                    string vWebRequest = await WebFunctions.PostRequestBearerTokenAsync($"{ApiUrl}/ComprobantesCancelacion/CancelarComprobanteByUUID", vData, vTokenLogin.Token);
+                    try
+                    {
+                        vCancelarCfdiResponse = WebFunctions.JsonConvert_DeserializeObject<CancelarCfdiResponse>(vWebRequest);
+                    }
+                    catch (Exception)
+                    {
+                        throw new ApplicationException(WebFunctions.ConvertHtmlToString(vWebRequest));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    vCancelarCfdiResponse.Descripcion = ExceptionFunctions.GetExceptionMessage(ex, ModoDebug);
+                }
+
+                if (vCancelarCfdiResponse.OperacionExitosa)
+                {
+                    string vDownloadsFolder = Environment.GetEnvironmentVariable("USERPROFILE") + @"\" + "Downloads";
+                    if (System.IO.Directory.Exists(vDownloadsFolder))
+                    {                      
+                        System.IO.File.WriteAllBytes(System.IO.Path.Combine(vDownloadsFolder, $"{vCancelarCfdiResponse.Id}.acuse.xml"), Convert.FromBase64String(vCancelarCfdiResponse.ArchivoXmlAcuseBase64));
+                    }
+                }
+
+                Console.WriteLine($"{vCancelarCfdiResponse.ToJson()}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ExceptionFunctions.GetExceptionMessage(ex, ModoDebug)}");
+            }
+        }
+        #endregion
+
+        #region Timbrar CFDI INGRESO JSON
+        private static async Task TimbrarCfdiIngresoJson()
+        {
+            try
+            {
+                TokenLogin vTokenLogin = await Login();   
+
                 ComprobanteDTO vComprobanteDTO = new ComprobanteDTO()
                 {
-                    EmpresaId = "NARJ",
-                    ErpId = "002354",
-                    ReferenciaErp = "TMPIN16213",
+                    EmpresaId = "DEMO",
+                    ErpId = "PRCP000003",
+                    ReferenciaErp = "TMPIN16215",
                     ClienteId = "0000000118",
                     Comentarios = "",
                     Complemento = "",
@@ -295,13 +369,13 @@ namespace FacturacionElectronica.NetFramework
                     Exportacion = "",
                     Fecha = DateTime.Now,
                     Folio = "",
-                    FormaDePago = "99",
+                    FormaDePago = "03",
                     InformacionGlobalAnio = null,
                     InformacionGlobalMeses = null,
                     InformacionGlobalPeriodicidad = null,
-                    LugarExpedicion = "62070",
-                    MetodoDePago = "PPD",
-                    ModuloErp = "AR",
+                    LugarExpedicion = "61957",
+                    MetodoDePago = "PUE",
+                    ModuloErp = "VENTAS",
                     MonedaId = "MXN",
                     MotivoDescuento = "",
                     NombreReporte = "",
@@ -314,25 +388,25 @@ namespace FacturacionElectronica.NetFramework
                     ReceptorRfc = "XAXX010101000",
                     ReceptorCalle = "AV. DE LOS MAESTROS ",
                     ReceptorCiudadId = "",
-                    ReceptorCodigoPostalId = "62070",
+                    ReceptorCodigoPostalId = "61957",
                     ReceptorColonia = "ALCALDE BARRANQUITAS",
                     ReceptorCurp = "",
                     ReceptorEnviarEmailAutomaticamente = true,
-                    ReceptorEstadoId = "MOR",
+                    ReceptorEstadoId = "CHI",
                     ReceptorMostrarDomicilioFiscal = true,
-                    ReceptorMunicipioId = "CUERNAVACA",
+                    ReceptorMunicipioId = "HIDALGO DEL PARRAL",
                     ReceptorNombreComercial = "",
                     ReceptorNumeroExterior = "284",
                     ReceptorNumeroInterior = "2",
                     ReceptorPaisId = "MX",
                     ReceptorRegistroIdentificacionFiscal = "",
-                    ReceptorUsoCfdi = "",
+                    ReceptorUsoCfdi = "S01",
                     Saldo = 232.0,
-                    Serie = "",
-                    SerieAtributo = "ARIN",
+                    Serie = "FA",
+                    SerieAtributo = "",
                     SubTotal = 200.0,
-                    SucursalAtributo = "ARIN",
-                    SucursalId = "",
+                    SucursalAtributo = "",
+                    SucursalId = "DEMO",
                     TimbrarComprobanteAutomaticamente = true,
                     TipoCambio = 1.0,
                     TipoDocumentoId = "IN",
@@ -383,8 +457,8 @@ namespace FacturacionElectronica.NetFramework
                 ApiResponse vApiResponse = new ApiResponse(false);
                 try
                 {
-                    vData = WebFunctions.JsonConvert_SerializeObject(vComprobanteDTO);
-                    vWebRequest = await WebFunctions.PostRequestBearerTokenAsync($"{ApiUrl}/ComprobantesErp/Comprobante", vData, vTokenLogin.Token);
+                    string vData = WebFunctions.JsonConvert_SerializeObject(vComprobanteDTO);
+                    string vWebRequest = await WebFunctions.PostRequestBearerTokenAsync($"{ApiUrl}/ComprobantesErp/Comprobante", vData, vTokenLogin.Token);
                     try
                     {
                         vApiResponse = WebFunctions.JsonConvert_DeserializeObject<ApiResponse>(vWebRequest);
@@ -398,6 +472,13 @@ namespace FacturacionElectronica.NetFramework
                 {
                     vApiResponse.Descripcion = ExceptionFunctions.GetExceptionMessage(ex, ModoDebug);
                 }
+
+                if (vApiResponse.OperacionExitosa)
+                {
+                    Console.WriteLine($"Folio Fiscal (UUID): {vApiResponse.Id}");
+                    await GetComprobanteCfdiDTOById(vApiResponse.Id, vTokenLogin.Token);
+                }
+
                 Console.WriteLine($"{vApiResponse.ToJson()}");
             }
             catch (Exception ex)
@@ -412,46 +493,14 @@ namespace FacturacionElectronica.NetFramework
         {
             try
             {
-                TokenLogin vTokenLogin = null;
-
-                Login vLogin = new Login()
-                {
-                    UserId = "democfdi@appsmexico.mx",
-                    Password = "Pa$$w0rd",
-                    RememberMe = true,
-                    EmpresaId = "NARJ",
-                    AplicacionId = "FacturacionElectronica.NetFramework",
-                    BrowserSOVersion = "",
-                    DispositivoId = "AMTestPC",
-                    ClientIPAddress = "0.0.0.0"
-                };
-
-                string vData = WebFunctions.JsonConvert_SerializeObject(vLogin);
-                string vWebRequest = await WebFunctions.PostRequestAsync($"{ApiUrl}/Account/Login", vData);
-                try
-                {
-                    vTokenLogin = WebFunctions.JsonConvert_DeserializeObject<TokenLogin>(vWebRequest);
-                }
-                catch (Exception)
-                {
-                    throw new ApplicationException(WebFunctions.ConvertHtmlToString(vWebRequest));
-                }
-
-                if (vTokenLogin == null)
-                {
-                    throw new ApplicationException("No se obtuvo informacion del token para iniciar sersion.");
-                }
-                else if (vTokenLogin.OperacionExitosa == false)
-                {
-                    throw new ApplicationException(vTokenLogin.Mensaje);
-                }
+                TokenLogin vTokenLogin = await Login();
 
                 ComprobanteDTO vComprobanteDTO = new ComprobanteDTO
                 {
-                    EmpresaId = "NARJ",
-                    ErpId = "002354",
-                    ReferenciaErp = "TMPIN16213",
-                    ClienteId = "0000000118",
+                    EmpresaId = "DEMO",
+                    ErpId = "PRCP000004",
+                    ReferenciaErp = "TMPIN16215",
+                    ClienteId = "0000000001",
                     Comentarios = "",
                     Complemento = "",
                     CondicionesDePago = "CONTADO",
@@ -469,9 +518,9 @@ namespace FacturacionElectronica.NetFramework
                     InformacionGlobalAnio = null,
                     InformacionGlobalMeses = null,
                     InformacionGlobalPeriodicidad = null,
-                    LugarExpedicion = "62070",
+                    LugarExpedicion = "61957",
                     MetodoDePago = "PPD",
-                    ModuloErp = "AR",
+                    ModuloErp = "VENTAS",
                     MonedaId = "MXN",
                     MotivoDescuento = "",
                     NombreReporte = "",
@@ -479,38 +528,38 @@ namespace FacturacionElectronica.NetFramework
                     PacRfc = "",
                     PedidoId = "",
                     ReceptorEmail = "",
-                    ReceptorRazonSocial = "VENTA AL PUBLICO EN GENERAL",
-                    ReceptorRegimenFiscalId = "616",
-                    ReceptorRfc = "XAXX010101000",
-                    ReceptorCalle = "AV. DE LOS MAESTROS ",
+                    ReceptorRazonSocial = "INMOBILIARIA",
+                    ReceptorRegimenFiscalId = "601",
+                    ReceptorRfc = "ICV060329BY0",
+                    ReceptorCalle = "LA CALLE",
                     ReceptorCiudadId = "",
-                    ReceptorCodigoPostalId = "62070",
-                    ReceptorColonia = "ALCALDE BARRANQUITAS",
+                    ReceptorCodigoPostalId = "33826",
+                    ReceptorColonia = "LA COLONIA",
                     ReceptorCurp = "",
                     ReceptorEnviarEmailAutomaticamente = true,
-                    ReceptorEstadoId = "MOR",
+                    ReceptorEstadoId = "CHI",
                     ReceptorMostrarDomicilioFiscal = true,
-                    ReceptorMunicipioId = "CUERNAVACA",
+                    ReceptorMunicipioId = "HIDALGO DEL PARRAL",
                     ReceptorNombreComercial = "",
-                    ReceptorNumeroExterior = "284",
-                    ReceptorNumeroInterior = "2",
-                    ReceptorPaisId = "MX",
+                    ReceptorNumeroExterior = "2",
+                    ReceptorNumeroInterior = "B",
+                    ReceptorPaisId = "MEX",
                     ReceptorRegistroIdentificacionFiscal = "",
-                    ReceptorUsoCfdi = "",
-                    Saldo = 199.16,
-                    Serie = "",
-                    SerieAtributo = "ARIN",
+                    ReceptorUsoCfdi = "G01",
+                    Saldo = 198.95,
+                    Serie = "FA",
+                    SerieAtributo = "",
                     SubTotal = 200.0,
-                    SucursalAtributo = "ARIN",
-                    SucursalId = "",
+                    SucursalAtributo = "",
+                    SucursalId = "DEMO",
                     TimbrarComprobanteAutomaticamente = true,
                     TipoCambio = 1.0,
                     TipoDocumentoId = "IN",
                     TipoRelacionComprobantes = "",
-                    Total = 199.16,
+                    Total = 198.95,
                     TotalImpuestosLocalesRetenidos = 0.0,
                     TotalImpuestosLocalesTrasladados = 0.0,
-                    TotalImpuestosRetenidos = 0.0,
+                    TotalImpuestosRetenidos = 0.21,
                     TotalImpuestosTrasladados = 0.16,
                     ValidarInformacionWebApp = false,
                     Conceptos = new List<ComprobanteConceptoDTO>(),
@@ -529,7 +578,7 @@ namespace FacturacionElectronica.NetFramework
                     Importe = 200.0,
                     NoIdentificacion = "",
                     ObjetoDeImpuestos = "02",
-                    PrecioBase = 100.0,
+                    PrecioBase = 200.0,
                     ProductoServicioId = "78101500",
                     UnidadMedida = "Pieza",
                     UnidadMedidaClave = "H87",
@@ -548,9 +597,9 @@ namespace FacturacionElectronica.NetFramework
                         new ComprobanteImpuestoDTO
                         {
                             LineaImpuesto = 2,
-                            CodigoImpuesto = "RETISR",
+                            CodigoImpuesto = "ISRRETH",
                             ImporteBase = 1.0,
-                            ImporteImpuesto = 0.0,
+                            ImporteImpuesto = 0.1,
                             TasaOCuota = 0.10,
                             TipoFactor = c_TipoFactor.Tasa,
                             TipoImpuesto = EnumTipoImpuesto.R
@@ -558,9 +607,9 @@ namespace FacturacionElectronica.NetFramework
                         new ComprobanteImpuestoDTO
                         {
                             LineaImpuesto = 3,
-                            CodigoImpuesto = "RETIVA",
+                            CodigoImpuesto = "IVARETH",
                             ImporteBase = 1.0,
-                            ImporteImpuesto = 0.0,
+                            ImporteImpuesto = 0.11,
                             TasaOCuota = 0.106666,
                             TipoFactor = c_TipoFactor.Tasa,
                             TipoImpuesto = EnumTipoImpuesto.R
@@ -599,7 +648,7 @@ namespace FacturacionElectronica.NetFramework
                     TotalDistanciaRecorrida = 2,
                     MercanciasPesoBrutoTotal = 2.0,
                     MercanciasUnidadPeso = "XBX",
-                    MercanciasNumeroTotalMercancias = 2,                    
+                    MercanciasNumeroTotalMercancias = 2,
                     NumeroPermisoSCT = "NumPermisoSCT",
                     TipoPermisoSCT = "TPAF01",
                     AutoTransporte = new ComprobanteComplementoCartaPorteAutoTransporteDTO
@@ -630,7 +679,7 @@ namespace FacturacionElectronica.NetFramework
                         {
                             IDUbicacion = "OR101010",
                             TipoUbicacion = EnumTipoUbicacionTransporte.Origen,
-                            RfcRemitenteDestinatario = "EKU9003173C9",
+                            RfcRemitenteDestinatario = "IVD920810GU2",
                             FechaHoraSalidaLlegada = new DateTime(2022,04,14),
                             Domicilio = new DomicilioDTO
                             {
@@ -693,8 +742,8 @@ namespace FacturacionElectronica.NetFramework
                 ApiResponse vApiResponse = new ApiResponse(false);
                 try
                 {
-                    vData = WebFunctions.JsonConvert_SerializeObject(vComprobanteDTO);
-                    vWebRequest = await WebFunctions.PostRequestBearerTokenAsync($"{ApiUrl}/ComprobantesErp/Comprobante", vData, vTokenLogin.Token);
+                    string vData = WebFunctions.JsonConvert_SerializeObject(vComprobanteDTO);
+                    string vWebRequest = await WebFunctions.PostRequestBearerTokenAsync($"{ApiUrl}/ComprobantesErp/Comprobante", vData, vTokenLogin.Token);
                     try
                     {
                         vApiResponse = WebFunctions.JsonConvert_DeserializeObject<ApiResponse>(vWebRequest);
@@ -708,6 +757,13 @@ namespace FacturacionElectronica.NetFramework
                 {
                     vApiResponse.Descripcion = ExceptionFunctions.GetExceptionMessage(ex, ModoDebug);
                 }
+
+                if (vApiResponse.OperacionExitosa)
+                {
+                    Console.WriteLine($"Folio Fiscal (UUID): {vApiResponse.Id}");
+                    await GetComprobanteCfdiDTOById(vApiResponse.Id, vTokenLogin.Token);
+                }
+
                 Console.WriteLine($"{vApiResponse.ToJson()}");
             }
             catch (Exception ex)
@@ -716,5 +772,44 @@ namespace FacturacionElectronica.NetFramework
             }
         }
         #endregion
+
+        #region Obtiene los datos del CFDI Timbrado
+        private static async Task GetComprobanteCfdiDTOById(string id, string token)
+        {
+            try
+            {
+                string vDownloadsFolder = Environment.GetEnvironmentVariable("USERPROFILE") + @"\" + "Downloads";
+                if (System.IO.Directory.Exists(vDownloadsFolder))
+                {
+                    string vWebRequest = await WebFunctions.GetRequestBearerTokenAsync($"{ApiUrl}/Comprobantes/GetComprobanteCfdiDTOById?id={id}", token);
+                    try
+                    {
+                        ComprobanteCfdiDTO vComprobanteCfdiDTO = WebFunctions.JsonConvert_DeserializeObject<ComprobanteCfdiDTO>(vWebRequest);
+                        if (vComprobanteCfdiDTO != null)
+                        {
+                            if (vComprobanteCfdiDTO.ArchivoPdf != null && string.IsNullOrEmpty(vComprobanteCfdiDTO.ArchivoPdf.ArchivoBase64) == false)
+                            {
+                                System.IO.File.WriteAllBytes(System.IO.Path.Combine(vDownloadsFolder, vComprobanteCfdiDTO.ArchivoPdf.NombreArchivo), Convert.FromBase64String(vComprobanteCfdiDTO.ArchivoPdf.ArchivoBase64));
+                            }
+
+                            if (vComprobanteCfdiDTO.ArchivoXml != null && string.IsNullOrEmpty(vComprobanteCfdiDTO.ArchivoXml.ArchivoBase64) == false)
+                            {
+                                System.IO.File.WriteAllBytes(System.IO.Path.Combine(vDownloadsFolder, vComprobanteCfdiDTO.ArchivoXml.NombreArchivo), Convert.FromBase64String(vComprobanteCfdiDTO.ArchivoXml.ArchivoBase64));
+                            }
+                        }
+                    }
+                    catch (Exception)
+                    {
+                        throw new ApplicationException(WebFunctions.ConvertHtmlToString(vWebRequest));
+                    }
+                }
+            }
+            catch (Exception)
+            {
+                throw;
+            }
+        }
+        #endregion
+
     }
 }
