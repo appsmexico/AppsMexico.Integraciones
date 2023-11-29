@@ -30,6 +30,7 @@ namespace FacturacionElectronica.NetFramework
     using System.Configuration;
     using System.Linq;
     using System.Threading.Tasks;
+    using System.Reflection;
 
     internal class Program
     {
@@ -41,7 +42,7 @@ namespace FacturacionElectronica.NetFramework
         {
             try
             {
-                Console.WriteLine("Ingrese el proceso que desea realizar. Timbrado XML = 1, Cancelacion XML = 2, Timbrado Ingreso JSON = 3, Timbrado Ingreso Carta Porte JSON = 4, Cancelacion CFDI JSON = 5");
+                Console.WriteLine("Ingrese el proceso que desea realizar. Timbrado XML SAT PAC Library = 1, Cancelacion XML SAT PAC Library = 2, Timbrado Ingreso JSON = 3, Timbrado Ingreso Carta Porte JSON = 4, Cancelacion CFDI JSON = 5, Timbrado XML AM ERP API = 6");
                 string vRespuesta = Console.ReadLine();
                 if (string.Compare(vRespuesta, "1", true) == 0)
                 {
@@ -68,6 +69,11 @@ namespace FacturacionElectronica.NetFramework
                     Console.WriteLine($"{nameof(CancelarCfdiJson)}");
                     Task.Run(async () => await CancelarCfdiJson());
                 }
+                else if (string.Compare(vRespuesta, "6", true) == 0)
+                {
+                    Console.WriteLine($"{nameof(TimbrarCfdiByAMErpApi)}");
+                    Task.Run(async () => await TimbrarCfdiByAMErpApi());
+                }
             }
             catch (Exception ex)
             {
@@ -78,7 +84,7 @@ namespace FacturacionElectronica.NetFramework
         }
 
 
-        #region Timbrar CFDI XML
+        #region Timbrar CFDI XML SAT PAC Library
         private static async Task TimbrarCfdi()
         {
             try
@@ -143,7 +149,7 @@ namespace FacturacionElectronica.NetFramework
         }
         #endregion
 
-        #region Cancelar CFDI  XML
+        #region Cancelar CFDI XML SAT PAC Library
         private static async Task CancelarCfdi()
         {
             try
@@ -242,6 +248,89 @@ namespace FacturacionElectronica.NetFramework
         }
         #endregion
 
+        #region Timbrar CFDI XML AM ERP API
+        private static async Task TimbrarCfdiByAMErpApi()
+        {
+            try
+            {
+                string vSerie = "A";
+                string vFolio = "37";
+                string vRfcEmisor = "XIA190128J61";
+
+                TokenLogin vTokenLogin = await Login();
+                if (!vTokenLogin.OperacionExitosa)
+                {
+                    throw new ApplicationException(vTokenLogin.Mensaje);
+                }
+
+                //Para realizar el timbrado se puede proporcionar el XML en alguno de los 3 diferentes tipos de dato (Archivo o ArchivoBase64 o RutaArchivo).
+                TimbradoCfdiRequest vTimbradoCfdiRequest = new TimbradoCfdiRequest()
+                {
+                    Archivo = null, // Condicional - Arreglo de bytes del archivo XML que se va a timbrar. 
+                    ArchivoBase64 = string.Empty, //Condicional - Archivo en cadena Base64 del archivo XML que se va a timbrar. 
+                    Id = $"{vSerie}{vFolio}", // Id unico para identificar el CFDI
+                    ModoDebug = ModoDebug, // Indica si se generara errores e informacion detallada del proceso de timbrado del CFDI
+                    ModoPrueba = ModoPrueba, // Indica si el CFDI se va a timbrar en el ambiente de pruebas
+                    Password = ConfigurationManager.AppSettings["WSPassword"], //Contraseña del usuario para realizar la conexion con el servicio de timbrado
+                    ProveedorPacDefault = ConfigurationManager.AppSettings["ProveedorPacDefault"], //Proveedor PAC con el que se realizara el timbrado
+                    RfcEmisor = vRfcEmisor, // Registro Federal de Contribuyentes (RFC) del Emisor del CFDI
+                    RutaArchivo = @"C:\Desarrollo\AppsMexico\GitHub\AppsMexico\AppsMexico.Integraciones\test\FE\prueba_cfdi33_ingreso.xml", // Condicional - Ruta fisica del archivo XML que se va a timbrar (Path). En caso de pasar el archivo en Base64 o arreglo de bytes, esta ruta sirve para indicar donde se van a grabar los archivos que genere el proceso.
+                    Usuario = ConfigurationManager.AppSettings["WSUsuario"], //Usuario para realizar la conexion con el servicio de timbrado
+
+                    GenerarPdf = true, //Indica si genera o no una representacion impresa del CFDI
+                    GenerarQrCode = true, //Indica si genera o no el codigo QR de la representacion impresa del CFDI
+                };
+
+                TimbradoCfdiResponse vTimbradoCfdiResponse = null;
+                string vData = WebFunctions.JsonConvert_SerializeObject(vTimbradoCfdiRequest);
+                string vWebRequest = await WebFunctions.PostRequestBearerTokenAsync("/ErpComprobantes/TimbrarComprobanteErpFromXml", vData, token: vTokenLogin.Token, rootUrl: ApiUrl);
+                try
+                {
+                    vTimbradoCfdiResponse = WebFunctions.JsonConvert_DeserializeObject<TimbradoCfdiResponse>(vWebRequest);
+                }
+                catch (Exception)
+                {
+                    throw new ApplicationException(WebFunctions.ConvertHtmlToString(vWebRequest));
+                }
+
+                //TimbradoCfdiResponse vTimbradoCfdiResponse = new TimbradoCfdiResponse()
+                //{
+                //    Id //ID o Codigo de Mensaje de la respuesta
+                //    Descripcion // Mensaje de la respuesta
+                //    OperacionExitosa // Indica si el proceso se ejecuto exitosamente o no. True para respuestas exitosas y Falso para respuestas erroneas
+                //    ArchivoXmlBase64 // Archivo en cadena Base64 del XML Encoding UTF8 en respustas exitosas
+                //    RfcPac // RFC del proveedor PAC con el que se timbro el CFDI
+                //};
+
+
+                if (vTimbradoCfdiResponse.OperacionExitosa == false)
+                {
+                    if ((vTimbradoCfdiRequest.ModoPrueba == false && vTimbradoCfdiRequest.ModoDebug == false))
+                    {
+                        throw new ApplicationException($"Error en el proceso de timbrado del comprobante {vTimbradoCfdiRequest.Id}. Codigo de Error: {vTimbradoCfdiResponse.Id} - Descripcion: {vTimbradoCfdiResponse.Descripcion}");
+                    }
+                    else
+                    {
+                        throw new ApplicationException($"Error en el proceso de timbrado del comprobante {vTimbradoCfdiRequest.Id}. Codigo de Error: {vTimbradoCfdiResponse.Id} - Descripcion: {vTimbradoCfdiResponse.Descripcion} | Ruta con los archivos para su revision: {vTimbradoCfdiRequest.RutaArchivo}");
+                    }
+                }
+                else if (string.IsNullOrWhiteSpace(vTimbradoCfdiResponse.ArchivoXmlBase64))
+                {
+                    throw new ApplicationException($"El comprobante {vTimbradoCfdiRequest.Id} se timbro correctamente, pero no se pudo obtener el XML. Favor de revisar en el SAT si existe el CFDI.");
+                }
+
+                string vXmlTimbrado = vTimbradoCfdiResponse.ArchivoXmlBase64.FromBase64String();
+                System.IO.File.WriteAllBytes(vTimbradoCfdiRequest.RutaArchivo.Replace(".xml", ".timbrado.xml"), Convert.FromBase64String(vTimbradoCfdiResponse.ArchivoXmlBase64));
+                Console.WriteLine($"PAC: {vTimbradoCfdiResponse.RfcPac}");
+                Console.WriteLine($"XML Timbrado: {vXmlTimbrado}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ExceptionFunctions.GetExceptionMessage(ex, ModoDebug)}");
+            }
+        }
+        #endregion
+
         #region Genera Token
         private static async Task<TokenLogin> Login()
         {
@@ -290,7 +379,7 @@ namespace FacturacionElectronica.NetFramework
         }
         #endregion
 
-        #region Timbrar CFDI INGRESO JSON
+        #region Cancelar CFDI JSON
         private static async Task CancelarCfdiJson()
         {
             try
@@ -329,7 +418,7 @@ namespace FacturacionElectronica.NetFramework
                 {
                     string vDownloadsFolder = Environment.GetEnvironmentVariable("USERPROFILE") + @"\" + "Downloads";
                     if (System.IO.Directory.Exists(vDownloadsFolder))
-                    {                      
+                    {
                         System.IO.File.WriteAllBytes(System.IO.Path.Combine(vDownloadsFolder, $"{vCancelarCfdiResponse.Id}.acuse.xml"), Convert.FromBase64String(vCancelarCfdiResponse.ArchivoXmlAcuseBase64));
                     }
                 }
@@ -348,7 +437,7 @@ namespace FacturacionElectronica.NetFramework
         {
             try
             {
-                TokenLogin vTokenLogin = await Login();   
+                TokenLogin vTokenLogin = await Login();
 
                 ComprobanteDTO vComprobanteDTO = new ComprobanteDTO()
                 {
