@@ -711,6 +711,7 @@ namespace FacturacionElectronica.NetFramework
                         MaterialPeligroso = true,
                         ClaveMaterialPeligroso = "1266",
                         ClaveEmbalaje = "4H2",
+                        ProductoServicioIdCP = "78101500",
                         CantidadesTransporta = new List<ComprobanteConceptoComplementoCartaPorteMercanciaCantidadTransportaDTO>
                         {
                             new ComprobanteConceptoComplementoCartaPorteMercanciaCantidadTransportaDTO
@@ -740,6 +741,10 @@ namespace FacturacionElectronica.NetFramework
                     MercanciasNumeroTotalMercancias = 2,
                     NumeroPermisoSCT = "NumPermisoSCT",
                     TipoPermisoSCT = "TPAF01",
+                    Version = "3.0",
+                    IdCCP = DataFunctions.GetGuid($"CCC{Guid.NewGuid().ToString("N").Substring(3, 29)}"),
+                    PesoBrutoVehicular = 10.5,
+                    MercanciasLogisticaInversaRecoleccionDevolucion = true,
                     AutoTransporte = new ComprobanteComplementoCartaPorteAutoTransporteDTO
                     {
                         ConfiguracionVehicular = "VL",
