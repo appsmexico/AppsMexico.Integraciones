@@ -1,5 +1,5 @@
 ﻿//Se deben instalar estos paquetes NuGet para que el proceso se ejecute correctamente
-//Agregar referncia a libreria build\AppsMexico.Common.Sat.Pac
+//Agregar referncia a Nuget AppsMexico.Common.Sat.Pac_Integraciones desde URL https://cloud.appsmexico.mx/am/NugetServerPublic/nuget 
 //<package id="System.Configuration.ConfigurationManager" version="6.0.0" targetFramework="net462" />
 //<package id="Microsoft.AspNetCore.Mvc.Core" version="2.2.0" targetFramework="net462" />
 //<package id="Microsoft.Extensions.Localization.Abstractions" version="5.0.13" targetFramework="net462" />
@@ -14,7 +14,6 @@
 //<package id="System.ServiceModel.Http" version="4.8.1" targetFramework="net462" />
 //<package id="System.Text.Encoding.CodePages" version="6.0.0" targetFramework="net462" />
 //<package id="System.Text.Json" version="5.0.0" targetFramework="net462" />
-
 namespace FacturacionElectronica.NetFramework
 {
     using AppsMexico.Common.Classes;
@@ -42,7 +41,7 @@ namespace FacturacionElectronica.NetFramework
         {
             try
             {
-                Console.WriteLine("Ingrese el proceso que desea realizar. Timbrado XML SAT PAC Library = 1, Cancelacion XML SAT PAC Library = 2, Timbrado Ingreso JSON = 3, Timbrado Ingreso Carta Porte JSON = 4, Cancelacion CFDI JSON = 5, Timbrado XML AM ERP API = 6");
+                Console.WriteLine("Ingrese el proceso que desea realizar. Timbrado XML SAT PAC Library = 1, Cancelacion XML SAT PAC Library = 2, Timbrado Ingreso JSON = 3, Timbrado Ingreso Carta Porte JSON = 4, Timbrado Traslado Carta Porte JSON = 5, Cancelacion CFDI JSON = 6, Timbrado XML AM ERP API = 7");
                 string vRespuesta = Console.ReadLine();
                 if (string.Compare(vRespuesta, "1", true) == 0)
                 {
@@ -66,10 +65,15 @@ namespace FacturacionElectronica.NetFramework
                 }
                 else if (string.Compare(vRespuesta, "5", true) == 0)
                 {
+                    Console.WriteLine($"{nameof(TimbrarCfdiTrasladoCartaPorteJson)}");
+                    Task.Run(async () => await TimbrarCfdiTrasladoCartaPorteJson());
+                }
+                else if (string.Compare(vRespuesta, "6", true) == 0)
+                {
                     Console.WriteLine($"{nameof(CancelarCfdiJson)}");
                     Task.Run(async () => await CancelarCfdiJson());
                 }
-                else if (string.Compare(vRespuesta, "6", true) == 0)
+                else if (string.Compare(vRespuesta, "7", true) == 0)
                 {
                     Console.WriteLine($"{nameof(TimbrarCfdiByAMErpApi)}");
                     Task.Run(async () => await TimbrarCfdiByAMErpApi());
@@ -590,6 +594,8 @@ namespace FacturacionElectronica.NetFramework
                     ErpId = "PRCP000004",
                     ReferenciaErp = "TMPIN16215",
                     ClienteId = "0000000001",
+                    ClienteIdFactoraje = "",
+                    AnioFiscal = 2024,
                     Comentarios = "",
                     Complemento = "",
                     CondicionesDePago = "CONTADO",
@@ -600,14 +606,14 @@ namespace FacturacionElectronica.NetFramework
                     EmisorRegimenFiscalId = "",
                     EmisorRfc = "",
                     ErpTipoDocumento = "IN",
-                    Exportacion = "",
+                    Exportacion = "01",
                     Fecha = DateTime.Now,
                     Folio = "",
                     FormaDePago = "99",
                     InformacionGlobalAnio = null,
                     InformacionGlobalMeses = null,
                     InformacionGlobalPeriodicidad = null,
-                    LugarExpedicion = "61957",
+                    LugarExpedicion = "44270",
                     MetodoDePago = "PPD",
                     ModuloErp = "VENTAS",
                     MonedaId = "MXN",
@@ -617,18 +623,19 @@ namespace FacturacionElectronica.NetFramework
                     PacRfc = "",
                     PedidoId = "",
                     ReceptorEmail = "",
-                    ReceptorRazonSocial = "INMOBILIARIA",
+                    ReceptorRazonSocial = "INDISTRIA ILUMINADORA DE ALMACENES",
+                    ReceptorRegimenCapital = "SA DE CV",
                     ReceptorRegimenFiscalId = "601",
-                    ReceptorRfc = "ICV060329BY0",
-                    ReceptorCalle = "LA CALLE",
+                    ReceptorRfc = "IIA040805DZ4",
+                    ReceptorCalle = "AV. PATRIA",
                     ReceptorCiudadId = "",
-                    ReceptorCodigoPostalId = "33826",
-                    ReceptorColonia = "LA COLONIA",
+                    ReceptorCodigoPostalId = "44970",
+                    ReceptorColonia = "ECHEVERRIA",
                     ReceptorCurp = "",
                     ReceptorEnviarEmailAutomaticamente = true,
-                    ReceptorEstadoId = "CHI",
+                    ReceptorEstadoId = "JAL",
                     ReceptorMostrarDomicilioFiscal = true,
-                    ReceptorMunicipioId = "HIDALGO DEL PARRAL",
+                    ReceptorMunicipioId = "GUADALAJARA",
                     ReceptorNombreComercial = "",
                     ReceptorNumeroExterior = "2",
                     ReceptorNumeroInterior = "B",
@@ -636,11 +643,11 @@ namespace FacturacionElectronica.NetFramework
                     ReceptorRegistroIdentificacionFiscal = "",
                     ReceptorUsoCfdi = "G01",
                     Saldo = 198.95,
-                    Serie = "FA",
+                    Serie = "A",
                     SerieAtributo = "",
                     SubTotal = 200.0,
                     SucursalAtributo = "",
-                    SucursalId = "DEMO",
+                    SucursalId = "MATRIZ",
                     TimbrarComprobanteAutomaticamente = true,
                     TipoCambio = 1.0,
                     TipoDocumentoId = "IN",
@@ -660,7 +667,7 @@ namespace FacturacionElectronica.NetFramework
                     Cantidad = 1.0,
                     ComentariosConcepto = "",
                     Complemento = "",
-                    Descripcion = "Cigarros",
+                    Descripcion = "Brocolis",
                     DescuentoConcepto = 1.0,
                     ErpIdConcepto = "1",
                     GrupoImpuestos = "",
@@ -668,9 +675,9 @@ namespace FacturacionElectronica.NetFramework
                     NoIdentificacion = "",
                     ObjetoDeImpuestos = "02",
                     PrecioBase = 200.0,
-                    ProductoServicioId = "78101500",
-                    UnidadMedida = "Pieza",
-                    UnidadMedidaClave = "H87",
+                    ProductoServicioId = "50442000",
+                    UnidadMedida = "KILO",
+                    UnidadMedidaClave = "KGM",
                     ValorUnitario = 200.0,
                     Impuestos = new List<ComprobanteImpuestoDTO> {
                         new ComprobanteImpuestoDTO
@@ -708,10 +715,10 @@ namespace FacturacionElectronica.NetFramework
                     {
                         ConceptoId = "1",
                         PesoEnKg = 1.0,
-                        MaterialPeligroso = true,
-                        ClaveMaterialPeligroso = "1266",
-                        ClaveEmbalaje = "4H2",
-                        ProductoServicioIdCP = "78101500",
+                        MaterialPeligroso = false,
+                        ClaveMaterialPeligroso = "",
+                        ClaveEmbalaje = "",
+                        ProductoServicioIdCP = "50442000",
                         CantidadesTransporta = new List<ComprobanteConceptoComplementoCartaPorteMercanciaCantidadTransportaDTO>
                         {
                             new ComprobanteConceptoComplementoCartaPorteMercanciaCantidadTransportaDTO
@@ -741,14 +748,15 @@ namespace FacturacionElectronica.NetFramework
                     MercanciasNumeroTotalMercancias = 2,
                     NumeroPermisoSCT = "NumPermisoSCT",
                     TipoPermisoSCT = "TPAF01",
-                    Version = "3.0",
+                    Version = "3.1", //Cambio 3.1
                     IdCCP = DataFunctions.GetGuid($"CCC{Guid.NewGuid().ToString("N").Substring(3, 29)}"),
                     PesoBrutoVehicular = 10.5,
                     MercanciasLogisticaInversaRecoleccionDevolucion = true,
                     AutoTransporte = new ComprobanteComplementoCartaPorteAutoTransporteDTO
                     {
-                        ConfiguracionVehicular = "VL",
-                        PlacaVM = "plac892",
+                        ErpId = "PLAC892", //Cambio 3.1 > Id unico del registro del vehiculo en el ERP
+                        ConfiguracionVehicular = c_ConfigAutotransporte.VL, //Cambio 3.1 > Cambio de string por enumeracion
+                        PlacaVM = "PLAC892",
                         AnioModeloVM = 2020,
                         SeguroAseguraResponsabilidadCivil = "SW Seguros",
                         SeguroPolizaResponsabilidadCivil = "123456789",
@@ -762,6 +770,8 @@ namespace FacturacionElectronica.NetFramework
                     {
                         new ComprobanteComplementoCartaPorteFiguraTransporteDTO
                         {
+                            ErpId = "CHOF123", //Cambio 3.1 > Id unico del registro de la figura de transporte en el ERP (PK Chofer)
+                            Nombre = "Juan Perez", //Cambio 3.1 > Nombre de la figura de transporte (chofer)
                             TipoFiguraTransporte = EnumTipoFiguraTransporte.Operador,
                             Rfc = "VAAM130719H60",
                             NumeroLicencia = "a234567890",
@@ -831,6 +841,257 @@ namespace FacturacionElectronica.NetFramework
                                 CodigoPostal = "25350"
                             },
                         },
+                    }
+                };
+                ApiResponse vApiResponse = new ApiResponse(false);
+                try
+                {
+                    string vData = WebFunctions.JsonConvert_SerializeObject(vComprobanteDTO);
+                    string vWebRequest = await WebFunctions.PostRequestBearerTokenAsync($"{ApiUrl}/ComprobantesErp/Comprobante", vData, vTokenLogin.Token);
+                    try
+                    {
+                        vApiResponse = WebFunctions.JsonConvert_DeserializeObject<ApiResponse>(vWebRequest);
+                    }
+                    catch (Exception)
+                    {
+                        throw new ApplicationException(WebFunctions.ConvertHtmlToString(vWebRequest));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    vApiResponse.Descripcion = ExceptionFunctions.GetExceptionMessage(ex, ModoDebug);
+                }
+
+                if (vApiResponse.OperacionExitosa)
+                {
+                    Console.WriteLine($"Folio Fiscal (UUID): {vApiResponse.Id}");
+                    await GetComprobanteCfdiDTOById(vApiResponse.Id, vTokenLogin.Token);
+                }
+
+                Console.WriteLine($"{vApiResponse.ToJson()}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ExceptionFunctions.GetExceptionMessage(ex, ModoDebug)}");
+            }
+        }
+        #endregion
+
+        #region Timbrar CFDI TRASLADO CARTA PORTE JSON
+        private static async Task TimbrarCfdiTrasladoCartaPorteJson()
+        {
+            try
+            {
+                TokenLogin vTokenLogin = await Login();
+
+                ComprobanteDTO vComprobanteDTO = new ComprobanteDTO
+                {
+                    EmpresaId = "DEMO",
+                    ErpId = "CP0000142",
+                    ReferenciaErp = "",
+                    ClienteId = "0000000002",
+                    ClienteIdFactoraje = "",
+                    AnioFiscal = 2024,
+                    Comentarios = "",
+                    Complemento = "",
+                    CondicionesDePago = "",
+                    Descuento = 0.0,
+                    DireccionEnvioId = "DEFAULT",
+                    EmisorFacAtrAdquiriente = "",
+                    EmisorRazonSocial = "",
+                    EmisorRegimenFiscalId = "",
+                    EmisorRfc = "",
+                    ErpTipoDocumento = "T",
+                    Exportacion = "01",
+                    Fecha = DateTime.Now,
+                    Folio = "",
+                    FormaDePago = "",
+                    InformacionGlobalAnio = null,
+                    InformacionGlobalMeses = null,
+                    InformacionGlobalPeriodicidad = null,
+                    LugarExpedicion = "44270",
+                    MetodoDePago = "",
+                    ModuloErp = "ERP",
+                    MonedaId = "XXX",
+                    MotivoDescuento = "",
+                    NombreReporte = "",
+                    OrdenCompra = "",
+                    PacRfc = "",
+                    PedidoId = "",
+                    ReceptorEmail = "",
+                    ReceptorRazonSocial = "ESCUELA KEMPER URGATE",
+                    ReceptorRegimenCapital = "SA DE CV",
+                    ReceptorRegimenFiscalId = "601",
+                    ReceptorRfc = "EKU9003173C9",
+                    ReceptorCalle = "AV. PATRIA",
+                    ReceptorCiudadId = "",
+                    ReceptorCodigoPostalId = "44970",
+                    ReceptorColonia = "ECHEVERRIA",
+                    ReceptorCurp = "",
+                    ReceptorEnviarEmailAutomaticamente = true,
+                    ReceptorEstadoId = "JAL",
+                    ReceptorMostrarDomicilioFiscal = true,
+                    ReceptorMunicipioId = "GUADALAJARA",
+                    ReceptorNombreComercial = "",
+                    ReceptorNumeroExterior = "2",
+                    ReceptorNumeroInterior = "B",
+                    ReceptorPaisId = "MEX",
+                    ReceptorRegistroIdentificacionFiscal = "",
+                    ReceptorUsoCfdi = "P01",
+                    Saldo = 0.0,
+                    Serie = "TR",
+                    SerieAtributo = "",
+                    SubTotal = 0.0,
+                    SucursalAtributo = "",
+                    SucursalId = "MATRIZ",
+                    TimbrarComprobanteAutomaticamente = true,
+                    TipoCambio = 1.0,
+                    TipoDocumentoId = "IN",
+                    TipoRelacionComprobantes = "",
+                    Total = 0.0,
+                    TotalImpuestosLocalesRetenidos = 0.0,
+                    TotalImpuestosLocalesTrasladados = 0.0,
+                    TotalImpuestosRetenidos = 0.0,
+                    TotalImpuestosTrasladados = 0.0,
+                    ValidarInformacionWebApp = false,
+                    Conceptos = new List<ComprobanteConceptoDTO>(),
+                };
+
+                ComprobanteConceptoDTO vComprobanteConceptoDTO = new ComprobanteConceptoDTO
+                {
+                    ConceptoId = "1",
+                    Cantidad = 1.0,
+                    ComentariosConcepto = "",
+                    Complemento = "",
+                    Descripcion = "PLATAFORMA ARTICULADA. HR2056",
+                    DescuentoConcepto = 0.0,
+                    ErpIdConcepto = "1",
+                    GrupoImpuestos = "",
+                    Importe = 0.0,
+                    NoIdentificacion = "",
+                    ObjetoDeImpuestos = "01",
+                    PrecioBase = 0.0,
+                    ProductoServicioId = "22101800",
+                    UnidadMedida = "Pieza",
+                    UnidadMedidaClave = "H87",
+                    ValorUnitario = 0.0,
+                    Impuestos = null,
+                    ComplementoCartaPorteMercancia = new ComprobanteConceptoComplementoCartaPorteMercanciaDTO
+                    {
+                        ConceptoId = "1",
+                        PesoEnKg = 7890.0,
+                        MaterialPeligroso = false,
+                        ClaveMaterialPeligroso = "",
+                        ClaveEmbalaje = "",
+                        CantidadesTransporta = new List<ComprobanteConceptoComplementoCartaPorteMercanciaCantidadTransportaDTO>
+                        {
+                            new ComprobanteConceptoComplementoCartaPorteMercanciaCantidadTransportaDTO
+                            {
+                                IDOrigen = "OR101010",
+                                IDDestino = "DE202020",
+                                Cantidad = 1,
+                            },
+                            new ComprobanteConceptoComplementoCartaPorteMercanciaCantidadTransportaDTO
+                            {
+                                IDOrigen = "OR101010",
+                                IDDestino = "DE202021",
+                                Cantidad = 1,
+                            },
+                        },
+                    }
+                };
+
+                vComprobanteDTO.Conceptos.Add(vComprobanteConceptoDTO);
+
+                vComprobanteDTO.ComplementoCartaPorte = new ComprobanteComplementoCartaPorteDTO
+                {
+                    RegistroISTMO = false,
+                    TransporteInternacional = "No",
+                    TotalDistanciaRecorrida = 188.07,
+                    MercanciasCargoPorTasacion = 0.0,
+                    MercanciasLogisticaInversaRecoleccionDevolucion = true,
+                    MercanciasNumeroTotalMercancias = 1,
+                    MercanciasPesoBrutoTotal = 7890.0,
+                    MercanciasPesoNetoTotal = 0.0,
+                    MercanciasUnidadPeso = "KGM",
+                    NumeroPermisoSCT = "2857806",
+                    PesoBrutoVehicular = 27.89,
+                    TipoPermisoSCT = "TPAF01",
+                    Version = "3.1", //Cambio 3.1
+                    ViaEntradaSalida = "",
+                    IdCCP = DataFunctions.GetGuid($"CCC{Guid.NewGuid().ToString("N").Substring(3, 29)}"),
+                    AutoTransporte = new ComprobanteComplementoCartaPorteAutoTransporteDTO
+                    {
+                        ErpId = "69AZ1A", //Cambio 3.1 > Id unico del registro del vehiculo en el ERP
+                        ConfiguracionVehicular = c_ConfigAutotransporte.C3, //Cambio 3.1 > Cambio de string por enumeracion
+                        PlacaVM = "69AZ1A",
+                        AnioModeloVM = 2023,
+                        SeguroAseguraResponsabilidadCivil = "CHUBB",
+                        SeguroPolizaResponsabilidadCivil = "GN 44012324",
+                        SeguroAseguraCarga = "SW Seguros",
+                        SeguroAseguraMedioAmbiente = "",
+                        SeguroPolizaMedioAmbiente = "",
+                        Remolque1Placa = "",
+                        Remolque1SubTipoRemolque = "",
+                    },
+                    FigurasTransporte = new List<ComprobanteComplementoCartaPorteFiguraTransporteDTO>
+                    {
+                        new ComprobanteComplementoCartaPorteFiguraTransporteDTO
+                        {
+                            ErpId = "CHOF1234", //Cambio 3.1 > Id unico del registro de la figura de transporte en el ERP (PK Chofer)
+                            Nombre = "OSCAR KALA HAAK", //Cambio 3.1 > Nombre de la figura de transporte (chofer)
+                            TipoFiguraTransporte = EnumTipoFiguraTransporte.Operador,
+                            Rfc = "KAHO641101B39",
+                            NumeroLicencia = "LIC234567890",
+                            ResidenciaFiscal = "",
+                            NumeroRegistroIdentificacionFiscal = "",
+                        }
+                    },
+                    Ubicaciones = new List<ComprobanteComplementoCartaPorteUbicacionDTO>
+                    {
+                        new ComprobanteComplementoCartaPorteUbicacionDTO
+                        {
+                            IDUbicacion = "OR101010",
+                            TipoUbicacion = EnumTipoUbicacionTransporte.Origen,
+                            NombreRemitenteDestinatario= "ESCUELA WILSON ESQUIVEL",
+                            RfcRemitenteDestinatario = "EWE1709045U0",
+                            FechaHoraSalidaLlegada = new DateTime(2024,07,24, 18,1,0),
+                            Domicilio = new DomicilioDTO
+                            {
+                                CodigoDomicilio = "101010",
+                                Calle = "calle",
+                                NumeroExterior = "211",
+                                Colonia = "0347",
+                                Ciudad = "23",
+                                Referencia = "casa blanca 1",
+                                Municipio = "004",
+                                Estado = "COA",
+                                Pais = "MEX",
+                                CodigoPostal = "25350"
+                            },
+                        },
+                        new ComprobanteComplementoCartaPorteUbicacionDTO
+                        {
+                            IDUbicacion = "DE202020",
+                            TipoUbicacion = EnumTipoUbicacionTransporte.Destino,
+                            NombreRemitenteDestinatario= "KERNEL INDUSTIA JUGUETERA",
+                            RfcRemitenteDestinatario = "KIJ0906199R1",
+                            FechaHoraSalidaLlegada = new DateTime(2024,07,24, 19,0,0),
+                            DistanciaRecorrida = 188.07,
+                            Domicilio = new DomicilioDTO
+                            {
+                                CodigoDomicilio = "202020",
+                                Calle = "calle",
+                                NumeroExterior = "214",
+                                Colonia = "0347",
+                                Ciudad = "23",
+                                Referencia = "casa blanca 2",
+                                Municipio = "004",
+                                Estado = "COA",
+                                Pais = "MEX",
+                                CodigoPostal = "25350"
+                            },
+                        }
                     }
                 };
                 ApiResponse vApiResponse = new ApiResponse(false);
