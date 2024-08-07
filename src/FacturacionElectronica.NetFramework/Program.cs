@@ -18,9 +18,9 @@ namespace FacturacionElectronica.NetFramework
 {
     using AppsMexico.Common.Classes;
     using AppsMexico.Common.Classes.Account;
+    using AppsMexico.Common.Classes.Dbo;
     using AppsMexico.Common.Classes.Enums;
     using AppsMexico.Common.Classes.Enums.Sat.Cfdi;
-    using AppsMexico.Common.Classes.Dbo;
     using AppsMexico.Common.Classes.Sat;
     using AppsMexico.Common.Functions;
     using AppsMexico.Common.Sat.Pac;
@@ -29,7 +29,6 @@ namespace FacturacionElectronica.NetFramework
     using System.Configuration;
     using System.Linq;
     using System.Threading.Tasks;
-    using System.Reflection;
 
     internal class Program
     {
