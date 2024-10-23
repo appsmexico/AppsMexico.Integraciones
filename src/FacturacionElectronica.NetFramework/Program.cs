@@ -28,6 +28,7 @@ namespace FacturacionElectronica.NetFramework
     using System.Collections.Generic;
     using System.Configuration;
     using System.Linq;
+    using System.Reflection;
     using System.Threading.Tasks;
 
     internal class Program
@@ -40,7 +41,7 @@ namespace FacturacionElectronica.NetFramework
         {
             try
             {
-                Console.WriteLine("Ingrese el proceso que desea realizar. Timbrado XML SAT PAC Library = 1, Cancelacion XML SAT PAC Library = 2, Timbrado Ingreso JSON = 3, Timbrado Ingreso Carta Porte JSON = 4, Timbrado Traslado Carta Porte JSON = 5, Cancelacion CFDI JSON = 6, Timbrado XML AM ERP API = 7");
+                Console.WriteLine("Ingrese el proceso que desea realizar. Timbrado XML SAT PAC Library = 1, Cancelacion XML SAT PAC Library = 2, Timbrado Ingreso JSON = 3, Timbrado Ingreso Carta Porte JSON = 4, Timbrado Traslado Carta Porte JSON = 5, Cancelacion CFDI JSON = 6, Timbrado XML AM ERP API = 7, Validar Estatus de un CFDI = 8");
                 string vRespuesta = Console.ReadLine();
                 if (string.Compare(vRespuesta, "1", true) == 0)
                 {
@@ -77,6 +78,11 @@ namespace FacturacionElectronica.NetFramework
                     Console.WriteLine($"{nameof(TimbrarCfdiByAMErpApi)}");
                     Task.Run(async () => await TimbrarCfdiByAMErpApi());
                 }
+                else if (string.Compare(vRespuesta, "8", true) == 0)
+                {
+                    Console.WriteLine($"{nameof(ValidarStatusCfdi)}");
+                    Task.Run(async () => await ValidarStatusCfdi());
+                }                
             }
             catch (Exception ex)
             {
@@ -250,6 +256,46 @@ namespace FacturacionElectronica.NetFramework
             }
         }
         #endregion
+
+
+        #region Validar Status CFDI XML SAT PAC Library
+        private static async Task ValidarStatusCfdi()
+        {
+            try
+            {
+                string vRfcEmisor = "MRE9603207K8";
+
+                CancelarCfdiRequest vValidarStatusCfdiRequest = new CancelarCfdiRequest()
+                {
+                    ModoDebug = ModoDebug,
+                    ModoPrueba = ModoPrueba,
+                    Password = ConfigurationManager.AppSettings["WSPassword"], //Contraseña del usuario para realizar la conexion con el servicio de validacion
+                    ProcesoId = "SAT5900", //Id del proceso que esta ejecutando el la validacion
+                    ProveedorPacDefault = ConfigurationManager.AppSettings["ProveedorPacDefault"], // Proveedor PAC con el que se realizo el timbrado del CFDI a validar
+                    RfcEmpresaTransaccion = vRfcEmisor, //RFC de la empresa que esta realizando la transaccion
+                    RfcEmisor = vRfcEmisor, //RFC del emisor del CFDI
+                    RfcReceptor = "XAXX010101000", //RFC del receptor del CFDI
+                    SelloDigital = "C3B/wn+qiw0nS6B2sTQFykN7sy3At34GAE9XsKSc0HkCEV5Op+a9S32Q7EGEXT2Nwr3wSZU8Iq7WK8+yJQ2ArD8Gdyq4O25iQZtrHeJnd7fZHnIMSSJrNG7/Tspyta/jKytIZpLMwBpHlBDS5rJEMib6wn9z0zkj5OcHGHAi12SCN43rLa+yAp6m58OIdnYcpwhQryiSetTEZlzy6yOePDHmtGPV6q2B08ovEdWNV8Y2lGzyFgd9g7M0Et8KDhLmg/XLUTCAr5z0fk8DZElY3W+gGAiSTGYpRfDZwgEpDxBsLgsBpY2Y9EclEE993y9tLlsbXgl0WFZ0myKILOKcXw==", //Sello digital del CFDI
+                    Total = 160.01, //Cuando el tipo de comprobante sea Pago, el Total debe ser 0
+                    Usuario = ConfigurationManager.AppSettings["WSUsuario"], //Usuario para realizar la conexion con el servicio de validaciones
+                    UUID = DataFunctions.GetGuid("79447A87-F6EB-4624-8377-7D93573BFD9C") //Folio Fiscal del CFDI
+                };
+
+                SatProveedoresPacController SatProveedoresPacServiceBase = new SatProveedoresPacController();
+                CancelarCfdiResponse vValidarStatusCfdiResponse = await SatProveedoresPacServiceBase.ValidarStatusCfdi(vValidarStatusCfdiRequest);
+                //vValidarStatusCfdiResponse.CodigoStatusSat == EnumCodigoStatusSat;
+                //vValidarStatusCfdiResponse.StatusCancelacion == EnumStatusCancelacion;
+                //vValidarStatusCfdiResponse.StatusEsCancelable == EnumStatusEsCancelable;
+
+                Console.WriteLine($"Response: {vValidarStatusCfdiResponse.ToJson()}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ExceptionFunctions.GetExceptionMessage(ex, ModoDebug)}");
+            }
+        }
+        #endregion
+
 
         #region Timbrar CFDI XML AM ERP API
         private static async Task TimbrarCfdiByAMErpApi()
