@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<cfdi:Comprobante xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sat.gob.mx/cfd/4 http://www.sat.gob.mx/sitio_internet/cfd/4/cfdv40.xsd" Version="4.0" Serie="A" Fecha="2024-12-18T14:54:00" Sello="" FormaPago="99" NoCertificado="" Certificado="" CondicionesDePago="CONTADO" SubTotal="7600.00" Moneda="MXN" Total="8816.00" TipoDeComprobante="I" Exportacion="01" MetodoPago="PPD" LugarExpedicion="44270" xmlns:cfdi="http://www.sat.gob.mx/cfd/4">
+  <cfdi:Emisor Rfc="EKU9003173C9" Nombre="ESCUELA KEMPER URGATE" RegimenFiscal="601" />
+  <cfdi:Receptor Rfc="IIA040805DZ4" Nombre="INDISTRIA ILUMINADORA DE ALMACENES" DomicilioFiscalReceptor="44970" RegimenFiscalReceptor="601" UsoCFDI="G01" />
+  <cfdi:Conceptos>
+    <cfdi:Concepto ClaveProdServ="84111506" Cantidad="8.0000" ClaveUnidad="E48" Descripcion="Desarrollo de libreria en .NET Framework para permitir el timbrado de un XML desde un Script de Visual Basic (VBS)" ValorUnitario="950.0000" Importe="7600.0000" ObjetoImp="02">
+      <cfdi:Impuestos>
+        <cfdi:Traslados>
+          <cfdi:Traslado Base="7600.000000" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="1216.000000" />
+        </cfdi:Traslados>
+      </cfdi:Impuestos>
+    </cfdi:Concepto>
+  </cfdi:Conceptos>
+  <cfdi:Impuestos TotalImpuestosTrasladados="1216.00">
+    <cfdi:Traslados>
+      <cfdi:Traslado Base="7600.00" Impuesto="002" TipoFactor="Tasa" TasaOCuota="0.160000" Importe="1216.00" />
+    </cfdi:Traslados>
+  </cfdi:Impuestos>
+</cfdi:Comprobante>
