@@ -1,19 +1,19 @@
 ﻿//Se deben instalar estos paquetes NuGet para que el proceso se ejecute correctamente
 //Agregar referncia a Nuget AppsMexico.Common.Sat.Pac_Integraciones desde URL https://cloud.appsmexico.mx/am/NugetServerPublic/nuget 
-//<package id="System.Configuration.ConfigurationManager" version="6.0.0" targetFramework="net462" />
-//<package id="Microsoft.AspNetCore.Mvc.Core" version="2.2.0" targetFramework="net462" />
-//<package id="Microsoft.Extensions.Localization.Abstractions" version="5.0.13" targetFramework="net462" />
-//<package id="Microsoft.Extensions.Logging.Abstractions" version="5.0.0" targetFramework="net462" />
-//<package id="Microsoft.Extensions.Options, Version=5.0.0.0
-//<package id="Newtonsoft.Json, Version=13.0.0.0
+//<package id="System.Configuration.ConfigurationManager" version="8.0.1" targetFramework="net462" />
+//<package id="Microsoft.AspNetCore.Mvc.Core" version="2.3.9" targetFramework="net462" />
+//<package id="Microsoft.Extensions.Localization.Abstractions" version="8.0.25" targetFramework="net462" />
+//<package id="Microsoft.Extensions.Logging.Abstractions" version="8.0.2" targetFramework="net462" />
+//<package id="Microsoft.Extensions.Options, Version=8.0.2
+//<package id="Newtonsoft.Json, Version=13.0.4
 //<package id="Serilog 2.0.0
-//<package id="Serilog.Sinks.Console, Version=4.0.1.0
-//<package id="Serilog.Sinks.File, Version=5.0.0.0
-//<package id="System.ComponentModel.Annotations, Version=4.2.0.0
-//<package id="System.ServiceModel.Primitives" version="4.8.1" targetFramework="net462" />
-//<package id="System.ServiceModel.Http" version="4.8.1" targetFramework="net462" />
-//<package id="System.Text.Encoding.CodePages" version="6.0.0" targetFramework="net462" />
-//<package id="System.Text.Json" version="5.0.0" targetFramework="net462" />
+//<package id="Serilog.Sinks.Console, Version=5.0.1
+//<package id="Serilog.Sinks.File, Version=5.0.0
+//<package id="System.ComponentModel.Annotations, Version=5.0.0
+//<package id="System.ServiceModel.Primitives" version="8.1.2" targetFramework="net462" />
+//<package id="System.ServiceModel.Http" version="8.1.2" targetFramework="net462" />
+//<package id="System.Text.Encoding.CodePages" version="8.0.0" targetFramework="net462" />
+//<package id="System.Text.Json" version="8.0.6" targetFramework="net462" />
 namespace FacturacionElectronica.NetFramework
 {
     using AppsMexico.Common.Classes;
@@ -40,55 +40,63 @@ namespace FacturacionElectronica.NetFramework
         {
             try
             {
-                Console.WriteLine("Ingrese el proceso que desea realizar. Timbrado XML SAT PAC Library = 1, Cancelacion XML SAT PAC Library = 2, Timbrado Ingreso JSON = 3, Timbrado Ingreso Carta Porte JSON = 4, Timbrado Traslado Carta Porte JSON = 5, Cancelacion CFDI JSON = 6, Timbrado XML AM ERP API = 7, Validar Estatus de un CFDI = 8");
-                string vRespuesta = Console.ReadLine();
-                if (string.Compare(vRespuesta, "1", true) == 0)
+                Console.WriteLine("Seleccione la operación a ejecutar:");
+                Console.WriteLine("  1 - Timbrado XML SAT PAC Library");
+                Console.WriteLine("  2 - Cancelacion XML SAT PAC Library");
+                Console.WriteLine("  3 - Timbrado Ingreso JSON");
+                Console.WriteLine("  4 - Timbrado Ingreso Carta Porte JSON");
+                Console.WriteLine("  5 - Timbrado Traslado Carta Porte JSON");
+                Console.WriteLine("  6 - Cancelacion CFDI JSON");
+                Console.WriteLine("  7 - Timbrado XML AM ERP API");
+                Console.WriteLine("  8 - Validar Estatus de un CFDI");
+                Console.Write("Opción: ");
+                string opcion = Console.ReadLine()?.Trim();
+
+                switch (opcion)
                 {
-                    Console.WriteLine($"{nameof(TimbrarCfdi)}");
-                    Task.Run(async () => await TimbrarCfdi());
+                    case "1":
+                        Console.WriteLine($"{nameof(TimbrarCfdi)}");
+                        Task.Run(async () => await TimbrarCfdi());
+                        break;
+                    case "2":
+                        Console.WriteLine($"{nameof(CancelarCfdi)}");
+                        Task.Run(async () => await CancelarCfdi());
+                        break;
+                    case "3":
+                        Console.WriteLine($"{nameof(TimbrarCfdiIngresoJson)}");
+                        Task.Run(async () => await TimbrarCfdiIngresoJson());
+                        break;
+                    case "4":
+                        Console.WriteLine($"{nameof(TimbrarCfdiIngresoCartaPorteJson)}");
+                        Task.Run(async () => await TimbrarCfdiIngresoCartaPorteJson());
+                        break;
+                    case "5":
+                        Console.WriteLine($"{nameof(TimbrarCfdiTrasladoCartaPorteJson)}");
+                        Task.Run(async () => await TimbrarCfdiTrasladoCartaPorteJson());
+                        break;
+                    case "6":
+                        Console.WriteLine($"{nameof(CancelarCfdiJson)}");
+                        Task.Run(async () => await CancelarCfdiJson());
+                        break;
+                    case "7":
+                        Console.WriteLine($"{nameof(TimbrarCfdiByAMErpApi)}");
+                        Task.Run(async () => await TimbrarCfdiByAMErpApi());
+                        break;
+                    case "8":
+                        Console.WriteLine($"{nameof(ValidarStatusCfdi)}");
+                        Task.Run(async () => await ValidarStatusCfdi());
+                        break;
+                    default:
+                        Console.WriteLine("Opción no válida.");
+                        break;
                 }
-                else if (string.Compare(vRespuesta, "2", true) == 0)
-                {
-                    Console.WriteLine($"{nameof(CancelarCfdi)}");
-                    Task.Run(async () => await CancelarCfdi());
-                }
-                else if (string.Compare(vRespuesta, "3", true) == 0)
-                {
-                    Console.WriteLine($"{nameof(TimbrarCfdiIngresoJson)}");
-                    Task.Run(async () => await TimbrarCfdiIngresoJson());
-                }
-                else if (string.Compare(vRespuesta, "4", true) == 0)
-                {
-                    Console.WriteLine($"{nameof(TimbrarCfdiIngresoCartaPorteJson)}");
-                    Task.Run(async () => await TimbrarCfdiIngresoCartaPorteJson());
-                }
-                else if (string.Compare(vRespuesta, "5", true) == 0)
-                {
-                    Console.WriteLine($"{nameof(TimbrarCfdiTrasladoCartaPorteJson)}");
-                    Task.Run(async () => await TimbrarCfdiTrasladoCartaPorteJson());
-                }
-                else if (string.Compare(vRespuesta, "6", true) == 0)
-                {
-                    Console.WriteLine($"{nameof(CancelarCfdiJson)}");
-                    Task.Run(async () => await CancelarCfdiJson());
-                }
-                else if (string.Compare(vRespuesta, "7", true) == 0)
-                {
-                    Console.WriteLine($"{nameof(TimbrarCfdiByAMErpApi)}");
-                    Task.Run(async () => await TimbrarCfdiByAMErpApi());
-                }
-                else if (string.Compare(vRespuesta, "8", true) == 0)
-                {
-                    Console.WriteLine($"{nameof(ValidarStatusCfdi)}");
-                    Task.Run(async () => await ValidarStatusCfdi());
-                }                
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error: {ExceptionFunctions.GetExceptionMessage(ex, ModoDebug)}");
             }
-            Console.WriteLine("Press ENTER to finish");
-            Console.ReadLine();
+            Console.WriteLine("\nPresione cualquier tecla para salir...");
+            Console.ReadKey();
         }
 
 
@@ -97,22 +105,21 @@ namespace FacturacionElectronica.NetFramework
         {
             try
             {
-                string vSerie = "A";
-                string vFolio = "37";
-                string vRfcEmisor = "XIA190128J61";
+                string erpId = "F00134";
+                string vRfcEmisor = "EKU9003173C9";
 
                 //Para realizar el timbrado se puede proporcionar el XML en alguno de los 3 diferentes tipos de dato (Archivo o ArchivoBase64 o RutaArchivo).
                 TimbradoCfdiRequest vTimbradoCfdiRequest = new TimbradoCfdiRequest()
                 {
                     Archivo = null, // Condicional - Arreglo de bytes del archivo XML que se va a timbrar. 
                     ArchivoBase64 = string.Empty, //Condicional - Archivo en cadena Base64 del archivo XML que se va a timbrar. 
-                    Id = $"{vSerie}{vFolio}", // Id unico para identificar el CFDI
+                    Id = erpId, // Id unico para identificar el CFDI
                     ModoDebug = ModoDebug, // Indica si se generara errores e informacion detallada del proceso de timbrado del CFDI
                     ModoPrueba = ModoPrueba, // Indica si el CFDI se va a timbrar en el ambiente de pruebas
                     Password = ConfigurationManager.AppSettings["WSPassword"], //Contraseña del usuario para realizar la conexion con el servicio de timbrado
                     ProveedorPacDefault = ConfigurationManager.AppSettings["ProveedorPacDefault"], //Proveedor PAC con el que se realizara el timbrado
                     RfcEmisor = vRfcEmisor, // Registro Federal de Contribuyentes (RFC) del Emisor del CFDI
-                    RutaArchivo = @"C:\Desarrollo\AppsMexico\GitHub\AppsMexico\AppsMexico.Integraciones\test\FE\prueba_cfdi33_ingreso.xml", // Condicional - Ruta fisica del archivo XML que se va a timbrar (Path). En caso de pasar el archivo en Base64 o arreglo de bytes, esta ruta sirve para indicar donde se van a grabar los archivos que genere el proceso.
+                    RutaArchivo = @"D:\Desarrollo\AppsMexico\GitHub\AppsMexico\AppsMexico.Integraciones\test\FE\4.0\prueba_cfdi40_ingreso.xml", // Condicional - Ruta fisica del archivo XML que se va a timbrar (Path). En caso de pasar el archivo en Base64 o arreglo de bytes, esta ruta sirve para indicar donde se van a grabar los archivos que genere el proceso.
                     Usuario = ConfigurationManager.AppSettings["WSUsuario"], //Usuario para realizar la conexion con el servicio de timbrado
                 };
 
@@ -145,10 +152,9 @@ namespace FacturacionElectronica.NetFramework
                     throw new ApplicationException($"El comprobante {vTimbradoCfdiRequest.Id} se timbro correctamente, pero no se pudo obtener el XML. Favor de revisar en el SAT si existe el CFDI.");
                 }
 
-                string vXmlTimbrado = vTimbradoCfdiResponse.ArchivoXmlBase64.FromBase64String();
-                System.IO.File.WriteAllBytes(vTimbradoCfdiRequest.RutaArchivo.Replace(".xml", ".timbrado.xml"), Convert.FromBase64String(vTimbradoCfdiResponse.ArchivoXmlBase64));
-                Console.WriteLine($"PAC: {vTimbradoCfdiResponse.RfcPac}");
-                Console.WriteLine($"XML Timbrado: {vXmlTimbrado}");
+                string rutaSalida = vTimbradoCfdiRequest.RutaArchivo.Replace(".xml", ".timbrado.xml");
+                System.IO.File.WriteAllBytes(rutaSalida, Convert.FromBase64String(vTimbradoCfdiResponse.ArchivoXmlBase64));
+                Console.WriteLine($"XML Timbrado guardado en: {rutaSalida}");
             }
             catch (Exception ex)
             {
@@ -163,7 +169,7 @@ namespace FacturacionElectronica.NetFramework
             try
             {
                 string vMotivoCancelacionCodigo = "02";
-                string vRfcEmisor = "XIA190128J61";
+                string vRfcEmisor = "EKU9003173C9";
                 string vRfcReceptor = "XAXX010101000";
                 string vSelloDigital = "NaqoX3HicEWZKo8qlpWw+JoypFKqTqBYJzNaxrHM2M/QE02nK8YKOl0wX49lUyNjx1VQWOmoXMPrmCSbX5co0EkRspjZBQL+ee6fVB7D6K3rmthm/ZBnj451vqGx+80+OLBSJJvSawWoU9YJfqsRXeNaKimJk1L1f8bh27wDDSrsCrHQ0C9l+81APKEKAa250BxLljvc3XvxPETqxuNJYuJ80aGs2Vcz7+3BSB6h8HTQCbYd5W4fGu8xRYeTKMW89hpfRtQejsUC4z9fbT/juD+1Jpctd5h4Aw5VZJHtYYK04ijnlto7jpdRJ9O7X2vRx2XFOGDs2zYucXt6eb6cOQ==";
                 double vTotal = 116;
@@ -190,18 +196,19 @@ namespace FacturacionElectronica.NetFramework
                     ProveedorPacDefault = ConfigurationManager.AppSettings["ProveedorPacDefault"], // Proveedor PAC con el que se realizo el timbrado del CFDI a cancelar
                     RfcEmisor = vRfcEmisor, // Registro Federal de Contribuyentes (RFC) del Emisor del CFDI
                     RfcReceptor = vRfcReceptor, // Registro Federal de Contribuyentes (RFC) del Receptor del CFDI
-                    RutaArchivoAcuse = @"C:\Desarrollo\AppsMexico\GitHub\AppsMexico\AppsMexico.Integraciones\test\FE\prueba_cfdi33_ingreso_acuseCancelacion.xml", // Ruta fisica del archivo (Path) para grabar el acuse de cancelacion
-                    RutaArchivoCSDCer = @"C:\Desarrollo\AppsMexico\GitHub\AppsMexico\AppsMexico.Integraciones\test\FE\CSD_XIA190128J61_20190617140806\CSD_Xenon_Industrial_Articles_XIA190128J61_20190617_140751s.cer", // Ruta fisica (Path) del certificado (.cer) del CSD
-                    RutaArchivoCSDEnc = @"C:\Desarrollo\AppsMexico\GitHub\AppsMexico\AppsMexico.Integraciones\test\FE\CSD_XIA190128J61_20190617140806\XIA190128J61_ENC.enc", // Ruta fisica (Path) del certificado (.key) convertido a (.enc) del CSD
-                    RutaArchivoCSDPem = @"C:\Desarrollo\AppsMexico\GitHub\AppsMexico\AppsMexico.Integraciones\test\FE\CSD_XIA190128J61_20190617140806\XIA190128J61_PEM.pem", // Ruta fisica (Path) del certificado (.cer) convertido a (.pem) del CSD
-                    RutaArchivoCSDPfx = @"C:\Desarrollo\AppsMexico\GitHub\AppsMexico\AppsMexico.Integraciones\test\FE\CSD_XIA190128J61_20190617140806\XIA190128J61_PFX.pfx", // Ruta fisica (Path) del certificado (.cer) y llave privada (.key) del CSD convertido a (.pfx)
-                    RutaArchivoCSDKey = @"C:\Desarrollo\AppsMexico\GitHub\AppsMexico\AppsMexico.Integraciones\test\FE\CSD_XIA190128J61_20190617140806\CSD_Xenon_Industrial_Articles_XIA190128J61_20190617_140751.key", // Ruta fisica (Path) del certificado (.key) del CSD
+                    RutaArchivoAcuse = @"D:\Desarrollo\AppsMexico\GitHub\AppsMexico\AppsMexico.Integraciones\test\FE\4.0\prueba_cfdi40_ingreso_acuseCancelacion.xml", // Ruta fisica del archivo (Path) para grabar el acuse de cancelacion
+                    RutaArchivoCSDCer = @"D:\Desarrollo\AppsMexico\GitHub\AppsMexico\AppsMexico.Integraciones\test\FE\CSD\Personas Morales\ESCUELA KEMPER URGATE_EKU9003173C9\CSD_Sucursal_1_EKU9003173C9_20230517_223850.cer", // Ruta fisica (Path) del certificado (.cer) del CSD
+                    RutaArchivoCSDEnc = @"D:\Desarrollo\AppsMexico\GitHub\AppsMexico\AppsMexico.Integraciones\test\FE\CSD\Personas Morales\ESCUELA KEMPER URGATE_EKU9003173C9\EKU9003173C9_ENC.enc", // Ruta fisica (Path) del certificado (.key) convertido a (.enc) del CSD
+                    RutaArchivoCSDPem = @"D:\Desarrollo\AppsMexico\GitHub\AppsMexico\AppsMexico.Integraciones\test\FE\CSD\Personas Morales\ESCUELA KEMPER URGATE_EKU9003173C9\EKU9003173C9_PEM.pem", // Ruta fisica (Path) del certificado (.cer) convertido a (.pem) del CSD
+                    RutaArchivoCSDPfx = @"D:\Desarrollo\AppsMexico\GitHub\AppsMexico\AppsMexico.Integraciones\test\FE\CSD\Personas Morales\ESCUELA KEMPER URGATE_EKU9003173C9\EKU9003173C9_PFX.pfx", // Ruta fisica (Path) del certificado (.cer) y llave privada (.key) del CSD convertido a (.pfx)
+                    RutaArchivoCSDKey = @"D:\Desarrollo\AppsMexico\GitHub\AppsMexico\AppsMexico.Integraciones\test\FE\CSD\Personas Morales\ESCUELA KEMPER URGATE_EKU9003173C9\CSD_Sucursal_1_EKU9003173C9_20230517_223850.key", // Ruta fisica (Path) del certificado (.key) del CSD
                     SelloDigital = vSelloDigital, // Sello Digital del CFDI a cancelar
                     Total = vTotal, // Total del CFDI a cancelar
                     Usuario = ConfigurationManager.AppSettings["WSUsuario"], //Usuario para realizar la conexion con el servicio de cancelaciones
                     UUID = vUUID, // Folio Fiscal (UUID) del CFDI a cancelar
                     UUIDSustitucion = vUUIDSustitucion // Folio Fiscal (UUID) del CFDI que esta sustituyendo al CFDI que se esta cancelando cuando el motivo de cancelacion sea 01
                 };
+
                 SatProveedoresPacController SatProveedoresPacServiceBase = new SatProveedoresPacController();
                 CancelarCfdiResponse vCancelarCfdiResponse = await SatProveedoresPacServiceBase.CancelarCfdi(vCancelarCfdiRequest);
 
@@ -295,7 +302,6 @@ namespace FacturacionElectronica.NetFramework
         }
         #endregion
 
-
         #region Timbrar CFDI XML AM ERP API
         private static async Task TimbrarCfdiByAMErpApi()
         {
@@ -303,7 +309,7 @@ namespace FacturacionElectronica.NetFramework
             {
                 string vSerie = "A";
                 string vFolio = "37";
-                string vRfcEmisor = "XIA190128J61";
+                string vRfcEmisor = "EKU9003173C9";
 
                 TokenLogin vTokenLogin = await Login();
                 if (!vTokenLogin.OperacionExitosa)
@@ -322,7 +328,7 @@ namespace FacturacionElectronica.NetFramework
                     Password = ConfigurationManager.AppSettings["WSPassword"], //Contraseña del usuario para realizar la conexion con el servicio de timbrado
                     ProveedorPacDefault = ConfigurationManager.AppSettings["ProveedorPacDefault"], //Proveedor PAC con el que se realizara el timbrado
                     RfcEmisor = vRfcEmisor, // Registro Federal de Contribuyentes (RFC) del Emisor del CFDI
-                    RutaArchivo = @"C:\Desarrollo\AppsMexico\GitHub\AppsMexico\AppsMexico.Integraciones\test\FE\prueba_cfdi33_ingreso.xml", // Condicional - Ruta fisica del archivo XML que se va a timbrar (Path). En caso de pasar el archivo en Base64 o arreglo de bytes, esta ruta sirve para indicar donde se van a grabar los archivos que genere el proceso.
+                    RutaArchivo = @"D:\Desarrollo\AppsMexico\GitHub\AppsMexico\AppsMexico.Integraciones\test\FE\4.0\prueba_cfdi40_ingreso.xml", // Condicional - Ruta fisica del archivo XML que se va a timbrar (Path). En caso de pasar el archivo en Base64 o arreglo de bytes, esta ruta sirve para indicar donde se van a grabar los archivos que genere el proceso.
                     Usuario = ConfigurationManager.AppSettings["WSUsuario"], //Usuario para realizar la conexion con el servicio de timbrado
 
                     GenerarPdf = true, //Indica si genera o no una representacion impresa del CFDI
