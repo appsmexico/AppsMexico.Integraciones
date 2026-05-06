@@ -35,6 +35,7 @@ Console.WriteLine("Seleccione la operación a ejecutar:");
 Console.WriteLine("  1 - Timbrar CFDI");
 Console.WriteLine("  2 - Cancelar CFDI Sin Relacion. Codigo 02");
 Console.WriteLine("  3 - Cancelar CFDI Con Relacion. Codigo 01");
+Console.WriteLine("  4 - Cancelar CFDI Con Relacion. Error");
 Console.Write("Opción: ");
 string? opcion = Console.ReadLine()?.Trim();
 
@@ -48,6 +49,9 @@ switch (opcion)
         break;
     case "3":
         await EjecutarCancelacion(motivo: "01", uuidSustitucion: new Guid("FE5B60BD-C435-4656-8FF3-00F08EDB9421"));
+        break;
+    case "4":
+        await EjecutarCancelacion(motivo: "99", uuidSustitucion: null);
         break;
     default:
         Console.WriteLine("Opción no válida.");
