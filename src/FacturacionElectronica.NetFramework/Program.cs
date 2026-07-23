@@ -28,6 +28,7 @@ namespace FacturacionElectronica.NetFramework
     using System.Collections.Generic;
     using System.Configuration;
     using System.Linq;
+    using System.Reflection;
     using System.Threading.Tasks;
 
     internal class Program
@@ -49,6 +50,7 @@ namespace FacturacionElectronica.NetFramework
                 Console.WriteLine("  6 - Cancelacion CFDI JSON");
                 Console.WriteLine("  7 - Timbrado XML AM ERP API");
                 Console.WriteLine("  8 - Validar Estatus de un CFDI");
+                Console.WriteLine("  9 - Validar RFC");
                 Console.Write("Opción: ");
                 string opcion = Console.ReadLine()?.Trim();
 
@@ -85,6 +87,10 @@ namespace FacturacionElectronica.NetFramework
                     case "8":
                         Console.WriteLine($"{nameof(ValidarStatusCfdi)}");
                         Task.Run(async () => await ValidarStatusCfdi());
+                        break;
+                    case "9":
+                        Console.WriteLine($"{nameof(ValidarRfc)}");
+                        Task.Run(async () => await ValidarRfc());
                         break;
                     default:
                         Console.WriteLine("Opción no válida.");
@@ -263,7 +269,6 @@ namespace FacturacionElectronica.NetFramework
         }
         #endregion
 
-
         #region Validar Status CFDI XML SAT PAC Library
         private static async Task ValidarStatusCfdi()
         {
@@ -294,6 +299,51 @@ namespace FacturacionElectronica.NetFramework
                 //vValidarStatusCfdiResponse.StatusEsCancelable == EnumStatusEsCancelable;
 
                 Console.WriteLine($"Response: {vValidarStatusCfdiResponse.ToJson()}");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ExceptionFunctions.GetExceptionMessage(ex, ModoDebug)}");
+            }
+        }
+        #endregion
+
+        #region Validar RFC en la lista de contribuyentes obligados a expedir comprobantes fiscales (LCO)
+        private static async Task ValidarRfc()
+        {
+            try
+            {
+                string vRfcEmisor = "MRE9603207K8";
+
+                Console.WriteLine("Escriba los datos a validar:");       
+                Console.Write("Codigo Postal: ");
+                string codigoPostal = Console.ReadLine()?.Trim();
+
+                Console.Write("Razon Social: ");
+                string razonSocial = Console.ReadLine()?.Trim();
+
+                Console.Write("RFC: ");
+                string rfc = Console.ReadLine()?.Trim();
+
+                CancelarCfdiRequest vValidarRfcLcoRequest = new CancelarCfdiRequest()
+                {
+                    AplicacionId = Assembly.GetExecutingAssembly().GetName().Name,
+                    CodigoPostalEmisor = codigoPostal,
+                    ModoDebug = ModoDebug,
+                    ModoPrueba = ModoPrueba,
+                    Password = ConfigurationManager.AppSettings["WSPassword"],//Contraseña del usuario para realizar la conexion con el servicio de validacion
+                    ProcesoId = "IntegracionNet",//Id del proceso que esta ejecutando el la validacion
+                    ProveedorPacDefault = ConfigurationManager.AppSettings["ProveedorPacDefault"],// Proveedor PAC con el que se realizo el timbrado del CFDI a validar
+                    RazonSocialEmisor = razonSocial,
+                    RfcEmpresaTransaccion = vRfcEmisor,//RFC de la empresa que esta realizando la transaccion
+                    RfcEmisor = rfc,
+                    Usuario = ConfigurationManager.AppSettings["WSUsuario"]//Usuario para realizar la conexion con el servicio de validaciones
+                };
+
+                SatProveedoresPacController SatProveedoresPacServiceBase = new SatProveedoresPacController();
+                CancelarCfdiResponse validarRfcLcoResponse = await SatProveedoresPacServiceBase.ValidarRfcLco(vValidarRfcLcoRequest);
+
+
+                Console.WriteLine($"Response: {validarRfcLcoResponse.ToJson()}");
             }
             catch (Exception ex)
             {
@@ -1215,6 +1265,7 @@ namespace FacturacionElectronica.NetFramework
             }
         }
         #endregion
+
 
     }
 }
