@@ -37,7 +37,9 @@ namespace FacturacionElectronica.NetFramework
         private static bool ModoDebug { get => Convert.ToBoolean(ConfigurationManager.AppSettings["ModoDebug"]); }
         private static bool ModoPrueba { get => Convert.ToBoolean(ConfigurationManager.AppSettings["ModoPrueba"]); }
 
-        static void Main(string[] args)
+        //async: cada operacion se ESPERA. Con Task.Run sin esperar, Main seguia de largo hasta el Console.ReadKey del final,
+        //que se comia la primera tecla que pedia la operacion -el codigo postal de la 9- y el programa terminaba con codigo 0.
+        static async Task Main(string[] args)
         {
             try
             {
@@ -58,39 +60,39 @@ namespace FacturacionElectronica.NetFramework
                 {
                     case "1":
                         Console.WriteLine($"{nameof(TimbrarCfdi)}");
-                        Task.Run(async () => await TimbrarCfdi());
+                        await TimbrarCfdi();
                         break;
                     case "2":
                         Console.WriteLine($"{nameof(CancelarCfdi)}");
-                        Task.Run(async () => await CancelarCfdi());
+                        await CancelarCfdi();
                         break;
                     case "3":
                         Console.WriteLine($"{nameof(TimbrarCfdiIngresoJson)}");
-                        Task.Run(async () => await TimbrarCfdiIngresoJson());
+                        await TimbrarCfdiIngresoJson();
                         break;
                     case "4":
                         Console.WriteLine($"{nameof(TimbrarCfdiIngresoCartaPorteJson)}");
-                        Task.Run(async () => await TimbrarCfdiIngresoCartaPorteJson());
+                        await TimbrarCfdiIngresoCartaPorteJson();
                         break;
                     case "5":
                         Console.WriteLine($"{nameof(TimbrarCfdiTrasladoCartaPorteJson)}");
-                        Task.Run(async () => await TimbrarCfdiTrasladoCartaPorteJson());
+                        await TimbrarCfdiTrasladoCartaPorteJson();
                         break;
                     case "6":
                         Console.WriteLine($"{nameof(CancelarCfdiJson)}");
-                        Task.Run(async () => await CancelarCfdiJson());
+                        await CancelarCfdiJson();
                         break;
                     case "7":
                         Console.WriteLine($"{nameof(TimbrarCfdiByAMErpApi)}");
-                        Task.Run(async () => await TimbrarCfdiByAMErpApi());
+                        await TimbrarCfdiByAMErpApi();
                         break;
                     case "8":
                         Console.WriteLine($"{nameof(ValidarStatusCfdi)}");
-                        Task.Run(async () => await ValidarStatusCfdi());
+                        await ValidarStatusCfdi();
                         break;
                     case "9":
                         Console.WriteLine($"{nameof(ValidarRfc)}");
-                        Task.Run(async () => await ValidarRfc());
+                        await ValidarRfc();
                         break;
                     default:
                         Console.WriteLine("Opción no válida.");
